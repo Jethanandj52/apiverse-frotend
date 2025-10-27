@@ -94,7 +94,7 @@ ${jsCode}`;
 
     try {
       setLoadingAi(true); // start loader
-      const res = await axios.post("${BASE_URL}/ai/gemini", {
+      const res = await axios.post(`${BASE_URL}/ai/gemini`, {
         prompt,
         language: targetLang,
       });
