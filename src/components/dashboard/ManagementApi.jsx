@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Nav from "../home/Nav";
 import SideBar from "./SideBar";
 import { FaPlug, FaTrash } from "react-icons/fa";
-import ApiAdd from "./popup${BASE_URL}${BASE_URL}Add";
+import ApiAdd from "./popup/api/ApiAdd";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
 import ConfirmDeletePopup from "../popups/ConfirmDeletePopup";
