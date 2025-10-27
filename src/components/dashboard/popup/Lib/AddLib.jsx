@@ -15,7 +15,7 @@ const AddLib = ({ setShowModal,onLibraryAdded }) => {
   const [installation, setInstallation] = useState('');
   const [usage, setUsage] = useState('');
   const [integration, setIntegration] = useState('');
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const handleSubmit = async (e) => {
   e.preventDefault()

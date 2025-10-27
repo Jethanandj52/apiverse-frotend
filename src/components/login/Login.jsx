@@ -17,7 +17,7 @@ const Login = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const show = useRef(null);
   const navigate = useNavigate();
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const login = async () => {
     try {
       const res = await axios.post(

@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 const Forget = () => {
   const [forgetEmail, setForgetEmail] = useState("");
   const navigate = useNavigate();
-  const BASE_URL = import.meta.env.BASE_URL;
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   async function forgetPassword() {
     if (forgetEmail === "") {

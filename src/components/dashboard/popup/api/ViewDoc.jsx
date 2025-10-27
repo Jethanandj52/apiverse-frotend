@@ -14,7 +14,7 @@ const ViewDoc = ({ setShowModal, id }) => {
   const [copied, setCopied] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
-  const BASE_URL = import.meta.env.BASE_URL;
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Detect dark mode dynamically
   useEffect(() => {
     const updateDarkMode = () => setIsDark(document.body.classList.contains("dark"));

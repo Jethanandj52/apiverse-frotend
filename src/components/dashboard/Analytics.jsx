@@ -25,7 +25,7 @@ const Analytics = () => {
   const [countLib, setCountLib] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [pieData, setPieData] = useState([]);
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     fetchApi();
   }, []);

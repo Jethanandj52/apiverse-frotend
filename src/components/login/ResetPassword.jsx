@@ -16,7 +16,7 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const handleReset = async () => {
     if (!password || !confirmPassword) {
       toast.error("Please fill in both fields.");

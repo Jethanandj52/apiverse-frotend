@@ -13,7 +13,7 @@ const SavedItemsPopup = ({ onClose }) => {
   const [showDocLib, setShowDocLib] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [viewApiId, setViewApiId] = useState(null);
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // ✅ get userId from localStorage
   useEffect(() => {
     const storedId = localStorage.getItem("userId");

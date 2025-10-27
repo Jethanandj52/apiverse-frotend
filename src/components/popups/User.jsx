@@ -8,7 +8,7 @@ const User = () => {
   const [userData, setUserData] = useState({ firstName: "", lastName: "", email: "" });
   const [visible, setVisible] = useState(true);
   const navigate = useNavigate();
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     const getUser = async () => {
       try {

@@ -27,7 +27,7 @@ const Library = () => {
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareTitle, setShareTitle] = useState("");
   const [sharing, setSharing] = useState(false);
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const dropdownRef = useRef(null);
 
   // Fetch user + favorites

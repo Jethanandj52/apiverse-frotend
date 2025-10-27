@@ -6,7 +6,7 @@ const GroupDetails = ({ group, onClose, refreshGroups }) => {
   const [members, setMembers] = useState([]);
   const [groupName, setGroupName] = useState(group.name);
   const [groupDesc, setGroupDesc] = useState(group.description);
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const fetchMembers = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/groups/${group._id}/members`, { withCredentials: true });

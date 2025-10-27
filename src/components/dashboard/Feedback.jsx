@@ -12,7 +12,7 @@ const Feedbacks = () => {
   const [replyId, setReplyId] = useState(null);
   const [deleteId, setDeleteId] = useState(null); // ✅ Delete modal state
   const [loadingReply, setLoadingReply] = useState(false);
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Load feedbacks
   const fetchFeedbacks = async () => {
     try {

@@ -18,7 +18,7 @@ const ChatPopUp = ({ userId, onClose }) => {
   const [viewLibId, setViewLibId] = useState(null);
   const chatEndRef = useRef(null);
   const lastSentByUserRef = useRef(false);
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const isValidObjectId = (id) => /^[a-f\d]{24}$/i.test(id);
 
   // ✅ Fetch all groups

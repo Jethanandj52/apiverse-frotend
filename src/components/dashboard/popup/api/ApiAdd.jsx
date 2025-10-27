@@ -20,7 +20,7 @@ const ApiAdd = ({ setShowModal,onApiAdded }) => {
   const [integrationDescription, setIntegrationDescription] = useState('');
   const [setupSteps, setSetupSteps] = useState('');
   const [codeExamples, setCodeExamples] = useState('');
-  const BASE_URL = import.meta.env.BASE_URL;
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleSubmit = async (e) => {
     const apiData = {

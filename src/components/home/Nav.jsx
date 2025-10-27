@@ -31,7 +31,7 @@ const Nav = ({ sideBar, setSidebar }) => {
 
   const userId = localStorage.getItem("userId");
   const notifRef = useRef();
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // ✅ Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {

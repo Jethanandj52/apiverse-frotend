@@ -24,7 +24,7 @@ const Dashboard = () => {
   const [callsToday, setCallsToday] = useState(0);
   const [libCallsToday, setLibCallsToday] = useState(0);
   const [securityAlerts, setSecurityAlerts] = useState(0);
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const fetchApi = async () => {
     try {
       const resUser = await axios.get(`${BASE_URL}/user/admin/users`);

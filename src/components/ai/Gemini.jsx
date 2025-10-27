@@ -23,7 +23,7 @@ const Gemini = () => {
   const typingRef = useRef(true);
   const navigate = useNavigate();
 
-  const BASE_URL = import.meta.env.BASE_URL;
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const userId = localStorage.getItem("userId");
 

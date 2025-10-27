@@ -31,7 +31,7 @@ const Postman = () => {
 
   const TOKEN_KEY = "api_tester_jwt";
   const userId = localStorage.getItem("userId");
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // ✅ Redirect if user not logged in
   useEffect(() => {
     if (!userId) navigate("/");

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
 import ViewDocApi from ".${BASE_URL}/ViewDocApi";
 import ViewDocLibHome from "./Library/ViewDocLibHome";
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // ====================== Modal Component ======================
 const Modal = ({ title, children, onClose }) => (
   <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">

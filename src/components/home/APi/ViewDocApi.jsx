@@ -15,7 +15,7 @@ const ViewDocApi = ({ setShowModal, id }) => {
   const [docExample, setDocExample] = useState("");
   const [integrationCode, setIntegrationCode] = useState("");
   const [aiCode, setAiCode] = useState("");
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // ✅ New loader state
   const [loadingAi, setLoadingAi] = useState(false);
 
