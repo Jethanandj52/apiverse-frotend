@@ -3,7 +3,7 @@ import Nav from "../home/Nav";
 import SideBar from "./SideBar";
 import { FaPlug, FaHeart, FaRegHeart } from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
-import ViewDocApi from ".${BASE_URL}/ViewDocApi";
+import ViewDocApi from "./APi/ViewDocApi";
 import axios from "axios";
 import SavedItemsPopup from "../popups/SavedItemsPopup";
 import { toast } from "react-toastify";

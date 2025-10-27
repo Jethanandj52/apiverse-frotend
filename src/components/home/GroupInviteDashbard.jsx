@@ -4,7 +4,7 @@ import SideBar from "./SideBar";
 import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import ViewDocApi from ".${BASE_URL}/ViewDocApi";
+import ViewDocApi from "./APi/ViewDocApi";
 import ViewDocLibHome from "./Library/ViewDocLibHome";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // ====================== Modal Component ======================
