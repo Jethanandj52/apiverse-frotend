@@ -6,7 +6,7 @@ import ApiAdd from "./popup${BASE_URL}${BASE_URL}Add";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
 import ConfirmDeletePopup from "../popups/ConfirmDeletePopup";
-import ViewDoc from "./popup${BASE_URL}/ViewDoc";
+import ViewDoc from "./popup/api/ViewDoc";
 
 const ManagementApi = () => {
   const [sideBar, setSidebar] = useState(true);
