@@ -460,7 +460,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     e.preventDefault();
     if (!selectedGroupId || !receiverEmail) return toast.error("Select group and enter email");
     try {
-      await axios.post("$`{BASE_URL}/groupInvites/invite", { groupId: selectedGroupId, receiverEmail }, { withCredentials: true });
+      await axios.post(`${BASE_URL}/groupInvites/invite`, { groupId: selectedGroupId, receiverEmail }, { withCredentials: true });
       toast.success("Invite sent!");
       setReceiverEmail("");
       setSelectedGroupId("");
