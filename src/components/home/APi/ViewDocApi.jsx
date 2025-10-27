@@ -97,6 +97,7 @@ ${jsCode}`;
       const res = await axios.post(`${BASE_URL}/ai/gemini`, {
         prompt,
         language: targetLang,
+         userId: localStorage.getItem("userId"),
       });
 
       let output = res.data.response || "";
