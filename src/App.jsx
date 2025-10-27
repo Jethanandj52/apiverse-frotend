@@ -4,7 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import Login from './components/login/Login.jsx';
 import SignUp from './components/login/SignUp.jsx';
 import Forget from './components/login/Forget.jsx';
-import ResetPassword from './components/login/resetPassword.jsx';
+import ResetPassword from './components/login/ResetPassword.jsx';
 
 import Home from './components/home/Home.jsx';
 import About from './components/home/About.jsx';
