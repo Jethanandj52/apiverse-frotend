@@ -3,7 +3,7 @@ import axios from "axios";
 import { FaTimes, FaHeart, FaRegHeart } from "react-icons/fa";
 import ViewDocLibHome from "../home/Library/ViewDocLibHome";
 import { AnimatePresence } from "framer-motion";
-import ViewDocApi from "../home${BASE_URL}/ViewDocApi";
+import ViewDocApi from "../home/APi/ViewDocApi";
 
 const SavedItemsPopup = ({ onClose }) => {
   const [savedData, setSavedData] = useState({ apis: [], libraries: [] });

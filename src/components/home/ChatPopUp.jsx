@@ -3,7 +3,7 @@ import axios from "axios";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
-import ViewDocApi from ".${BASE_URL}/ViewDocApi";
+import ViewDocApi from "./APi/ViewDocApi";
 import ViewDocLibHome from "./Library/ViewDocLibHome";
 
 const ChatPopUp = ({ userId, onClose }) => {
