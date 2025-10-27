@@ -19,16 +19,16 @@ const HomeApi = () => {
   const [userId, setUserId] = useState(null);
   const [showSavedPopup, setShowSavedPopup] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true); // 🔹 new state for loading
 
   // Share modal states
   const [shareApi, setShareApi] = useState(null);
   const [groups, setGroups] = useState([]);
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareTitle, setShareTitle] = useState("");
-
-  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [sharing, setSharing] = useState(false);
 
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const dropdownRef = useRef(null);
 
   // ---------------- Fetch user and favorites ----------------
@@ -52,9 +52,14 @@ const HomeApi = () => {
   useEffect(() => {
     const fetchApi = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(`${BASE_URL}/rApi/showApi`, { withCredentials: true });
         setApi(res.data);
-      } catch {}
+      } catch (err) {
+        toast.error("Failed to fetch APIs");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchApi();
   }, []);
@@ -117,7 +122,9 @@ const HomeApi = () => {
         await axios.post(`${BASE_URL}/store/addApi`, { userId, apiId }, { withCredentials: true });
         setFavorites((prev) => [...prev, apiId]);
       }
-    } catch {}
+    } catch {
+      toast.error("Failed to update favorites");
+    }
   };
 
   // ---------------- Share ----------------
@@ -167,12 +174,17 @@ const HomeApi = () => {
     }
   };
 
+  // ---------------- UI ----------------
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white overflow-hidden">
+    <div className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white overflow-hidden min-h-screen">
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
       <SideBar sideBar={sideBar} />
 
-      <div className={`pt-[70px] transition-all duration-300 ${sideBar ? "pl-[220px]" : "pl-[60px]"} min-h-screen overflow-y-auto p-6`}>
+      <div
+        className={`pt-[70px] transition-all duration-300 ${
+          sideBar ? "pl-[220px]" : "pl-[60px]"
+        } min-h-screen overflow-y-auto p-6`}
+      >
         <div className="pt-10 px-4 md:px-8 pb-10">
           <div className="flex text-2xl md:text-3xl font-bold text-blue-400 mb-6 items-center gap-2">
             <FaPlug /> API's Management
@@ -181,13 +193,18 @@ const HomeApi = () => {
           {/* Search & Category */}
           <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center bg-gray-100 dark:bg-gray-900 py-2">
             <div className="w-full md:w-64 relative" ref={dropdownRef}>
-              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">Filter by Category:</label>
+              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Filter by Category:
+              </label>
               <input
                 type="text"
                 placeholder="Select Category..."
                 value={categorySearch}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                onChange={(e) => { setCategorySearch(e.target.value); setDropdownOpen(true); }}
+                onChange={(e) => {
+                  setCategorySearch(e.target.value);
+                  setDropdownOpen(true);
+                }}
                 className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {dropdownOpen && (
@@ -197,20 +214,28 @@ const HomeApi = () => {
                       <div
                         key={cat}
                         className="px-4 py-2 cursor-pointer hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 transition-colors"
-                        onClick={() => { setSelectedCategory(cat); setCategorySearch(cat); setDropdownOpen(false); }}
+                        onClick={() => {
+                          setSelectedCategory(cat);
+                          setCategorySearch(cat);
+                          setDropdownOpen(false);
+                        }}
                       >
                         {cat}
                       </div>
                     ))
                   ) : (
-                    <div className="px-4 py-2 text-gray-500 dark:text-gray-400">No categories found</div>
+                    <div className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                      No categories found
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
             <div className="w-full md:w-64">
-              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">Search API:</label>
+              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Search API:
+              </label>
               <input
                 type="text"
                 placeholder="Search in list..."
@@ -221,63 +246,122 @@ const HomeApi = () => {
             </div>
           </div>
 
-          {/* API Cards */}
-          <div className="grid justify-center md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
-            {filteredApis.length > 0 ? (
-              filteredApis.map((Api) => (
-                <div key={Api._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer">
-                  <div className="flex justify-between items-center border-b pb-3 border-blue-400">
-                    <h3 className="font-bold text-blue-500 text-2xl">{Api.name}</h3>
-                    <button onClick={() => toggleFavorite(Api._id)}>
-                      {favorites.includes(Api._id) ? <FaHeart className="text-red-500 text-xl" /> : <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />}
-                    </button>
+          {/* 🔹 Show Loader when data is loading */}
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+            </div>
+          ) : (
+            <div className="grid justify-center md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
+              {filteredApis.length > 0 ? (
+                filteredApis.map((Api) => (
+                  <div
+                    key={Api._id}
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
+                  >
+                    <div className="flex justify-between items-center border-b pb-3 border-blue-400">
+                      <h3 className="font-bold text-blue-500 text-2xl">{Api.name}</h3>
+                      <button onClick={() => toggleFavorite(Api._id)}>
+                        {favorites.includes(Api._id) ? (
+                          <FaHeart className="text-red-500 text-xl" />
+                        ) : (
+                          <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{Api.description}</p>
+                    <div className="leading-8 text-gray-700 dark:text-gray-300">
+                      <strong>Language:</strong> {Api.language} <br />
+                      <strong>Category:</strong> {Api.category} <br />
+                      <strong>Version:</strong> {Api.version} <br />
+                      <strong>License:</strong> {Api.license}
+                    </div>
+                    <div className="flex justify-center items-center mt-4 gap-4">
+                      <button
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                        onClick={() => setViewApiId(Api._id)}
+                      >
+                        View Docs
+                      </button>
+                      <button
+                        className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
+                        onClick={() => openShareModal(Api)}
+                      >
+                        Share
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{Api.description}</p>
-                  <div className="leading-8 text-gray-700 dark:text-gray-300">
-                    <strong>Language:</strong> {Api.language} <br />
-                    <strong>Category:</strong> {Api.category} <br />
-                    <strong>Version:</strong> {Api.version} <br />
-                    <strong>License:</strong> {Api.license}
-                  </div>
-                  <div className="flex justify-center items-center mt-4 gap-4">
-                    <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700" onClick={() => setViewApiId(Api._id)}>View Docs</button>
-                    <button className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600" onClick={() => openShareModal(Api)}>Share</button>
-                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">
+                    No APIs available
+                  </p>
                 </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">No APIs available</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Modals */}
       <AnimatePresence>
         {viewApiId && <ViewDocApi setShowModal={() => setViewApiId(null)} id={viewApiId} />}
-        {showSavedPopup && <SavedItemsPopup onClose={() => setShowSavedPopup(false)} favorites={favorites} setFavorites={setFavorites} />}
+        {showSavedPopup && (
+          <SavedItemsPopup
+            onClose={() => setShowSavedPopup(false)}
+            favorites={favorites}
+            setFavorites={setFavorites}
+          />
+        )}
 
         {shareApi && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-gray-800 rounded-lg p-6 w-[600px] shadow-lg">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-lg p-6 w-[600px] shadow-lg"
+            >
               <h3 className="text-lg font-bold text-purple-600 mb-4">Share API to Group</h3>
               <form onSubmit={shareToGroup} className="space-y-3">
                 <label className="block">
                   <div className="text-sm mb-1">Select Group</div>
-                  <select value={shareGroupId} onChange={(e) => setShareGroupId(e.target.value)} className="w-full p-3 rounded border">
+                  <select
+                    value={shareGroupId}
+                    onChange={(e) => setShareGroupId(e.target.value)}
+                    className="w-full p-3 rounded border"
+                  >
                     <option value="">-- choose group --</option>
-                    {groups.map((g) => <option key={g._id} value={g._id}>{g.name}</option>)}
+                    {groups.map((g) => (
+                      <option key={g._id} value={g._id}>
+                        {g.name}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label className="block">
                   <div className="text-sm mb-1">Title (optional)</div>
-                  <input value={shareTitle} onChange={(e) => setShareTitle(e.target.value)} className="w-full p-3 rounded border" />
+                  <input
+                    value={shareTitle}
+                    onChange={(e) => setShareTitle(e.target.value)}
+                    className="w-full p-3 rounded border"
+                  />
                 </label>
                 <div className="flex gap-2 justify-end">
-                  <button type="button" onClick={() => setShareApi(null)} className="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                  <button type="submit" disabled={sharing} className="px-4 py-2 bg-purple-600 text-white rounded">{sharing ? "Sharing..." : "Share"}</button>
+                  <button
+                    type="button"
+                    onClick={() => setShareApi(null)}
+                    className="px-4 py-2 bg-gray-300 rounded"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sharing}
+                    className="px-4 py-2 bg-purple-600 text-white rounded"
+                  >
+                    {sharing ? "Sharing..." : "Share"}
+                  </button>
                 </div>
               </form>
             </motion.div>
