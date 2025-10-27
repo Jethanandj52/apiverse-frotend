@@ -52,7 +52,7 @@ const HomeApi = () => {
   useEffect(() => {
     const fetchApi = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/rApi/showApi`);
+        const res = await axios.get(`${BASE_URL}/rApi/showApi`, { withCredentials: true });
         setApi(res.data);
       } catch {}
     };
