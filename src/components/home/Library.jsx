@@ -27,7 +27,11 @@ const Library = () => {
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareTitle, setShareTitle] = useState("");
   const [sharing, setSharing] = useState(false);
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // Loader
+  const [loading, setLoading] = useState(true);
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const dropdownRef = useRef(null);
 
   // Fetch user + favorites
@@ -44,7 +48,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       }
     };
     fetchUser();
-  }, []);
+  }, [BASE_URL]);
 
   // Toggle favorite
   const toggleFavorite = async (libId) => {
@@ -66,14 +70,17 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     const fetchLibraries = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(`${BASE_URL}/lib/getlibraries`, { withCredentials: true });
         setLibraries(res.data);
       } catch (err) {
         console.error("Error fetching libraries:", err.message);
+      } finally {
+        setLoading(false);
       }
     };
     fetchLibraries();
-  }, []);
+  }, [BASE_URL]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -176,6 +183,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
               <FaBox /> Library
             </div>
 
+            {/* Category + Search */}
             <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center bg-gray-100 dark:bg-gray-900 py-2">
               <div className="w-full md:w-64 relative" ref={dropdownRef}>
                 <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">Filter by Category:</label>
@@ -217,8 +225,13 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
               </div>
             </div>
 
+            {/* Library Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-              {filteredLibraries.length > 0 ? (
+              {loading ? (
+                <div className="col-span-full flex justify-center items-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
+                </div>
+              ) : filteredLibraries.length > 0 ? (
                 filteredLibraries.map((lib) => (
                   <div key={lib._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer">
                     <div className="flex justify-between items-center border-b pb-3 border-blue-400">
