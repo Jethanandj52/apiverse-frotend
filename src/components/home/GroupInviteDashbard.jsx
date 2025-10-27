@@ -401,7 +401,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     if (!newGroupName.trim()) return toast.error("Group name required");
     try {
       await axios.post(
-        "${BASE_URL}/groups/create",
+        `${BASE_URL}/groups/create`,
         { name: newGroupName, description: newGroupDesc },
         { withCredentials: true }
       );
