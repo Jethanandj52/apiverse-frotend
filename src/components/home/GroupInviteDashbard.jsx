@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
 import ViewDocApi from "./APi/ViewDocApi";
 import ViewDocLibHome from "./Library/ViewDocLibHome";
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // ====================== Modal Component ======================
 const Modal = ({ title, children, onClose }) => (
   <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
@@ -26,6 +25,8 @@ const Modal = ({ title, children, onClose }) => (
 // ====================== Group Details ======================
 const GroupDetails = ({ group }) => {
   const [members, setMembers] = useState([]);
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -81,6 +82,8 @@ const GroupChat = ({ groupId, userId }) => {
   const [viewLibId, setViewLibId] = useState(null);
   const chatEndRef = useRef(null);
   const lastSentByUserRef = useRef(false);
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   // Fetch messages and shared requests
   useEffect(() => {
@@ -315,6 +318,8 @@ const GroupChat = ({ groupId, userId }) => {
 // ====================== Group Menu ======================
 const GroupMenu = ({ onEdit, onDelete }) => {
   const [open, setOpen] = useState(false);
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   return (
     <div className="absolute top-2 right-2">
       <button
@@ -352,6 +357,8 @@ const GroupInviteDashboard = ({ userId }) => {
   const [groups, setGroups] = useState([]);
   const [invites, setInvites] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
