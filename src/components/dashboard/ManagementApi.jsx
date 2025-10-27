@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import Nav from "../home/Nav";
 import SideBar from "./SideBar";
 import { FaPlug, FaTrash } from "react-icons/fa";
-import ApiAdd from "./popup/api/ApiAdd";
+import ApiAdd from "./popup${BASE_URL}${BASE_URL}Add";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
 import ConfirmDeletePopup from "../popups/ConfirmDeletePopup";
-import ViewDoc from "./popup/api/ViewDoc";
+import ViewDoc from "./popup${BASE_URL}/ViewDoc";
 
 const ManagementApi = () => {
   const [sideBar, setSidebar] = useState(true);
@@ -21,10 +21,10 @@ const ManagementApi = () => {
   const [categorySearch, setCategorySearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-
+const BASE_URL = import.meta.env.BASE_URL;
   const fetchApi = async () => {
     try {
-      const res = await axios.get("/api/rApi/showApi");
+      const res = await axios.get(`${BASE_URL}/rApi/showApi`);
       setApi(res.data);
     } catch (error) {
       console.log("error:", error.message);
@@ -38,7 +38,7 @@ const ManagementApi = () => {
   const confirmDelete = async () => {
     if (!apiToDelete) return;
     try {
-      await axios.delete(`/api/rApi/deleteApi/${apiToDelete}`);
+      await axios.delete(`${BASE_URL}/rApi/deleteApi/${apiToDelete}`);
       setApiToDelete(null);
       fetchApi();
     } catch (err) {

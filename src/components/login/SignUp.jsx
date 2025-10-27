@@ -15,7 +15,7 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState("password");
   const show = useRef(null);
   const navigate = useNavigate();
-
+const BASE_URL = import.meta.env.BASE_URL;
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -30,7 +30,7 @@ const SignUp = () => {
 
   async function signupSystem() {
     try {
-      await axios.post("/api/auth/signup", formData, { withCredentials: true });
+      await axios.post(`${BASE_URL}/auth/signup`, formData, { withCredentials: true });
       toast.success("Your Account Has Been Registered", { autoClose: 2000 });
       setTimeout(() => navigate("/"), 2000);
     } catch (error) {

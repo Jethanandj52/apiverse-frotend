@@ -3,7 +3,7 @@ import axios from "axios";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
-import ViewDocApi from "./APi/ViewDocApi";
+import ViewDocApi from ".${BASE_URL}/ViewDocApi";
 import ViewDocLibHome from "./Library/ViewDocLibHome";
 
 const ChatPopUp = ({ userId, onClose }) => {
@@ -18,14 +18,14 @@ const ChatPopUp = ({ userId, onClose }) => {
   const [viewLibId, setViewLibId] = useState(null);
   const chatEndRef = useRef(null);
   const lastSentByUserRef = useRef(false);
-
+const BASE_URL = import.meta.env.BASE_URL;
   const isValidObjectId = (id) => /^[a-f\d]{24}$/i.test(id);
 
   // ✅ Fetch all groups
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const res = await axios.get("/api/groups/myGroups", {
+        const res = await axios.get(`${BASE_URL}/groups/myGroups`, {
           withCredentials: true,
         });
         setGroups(res.data);
@@ -44,14 +44,14 @@ const ChatPopUp = ({ userId, onClose }) => {
       try {
         const [memberRes, msgRes, srRes] = await Promise.all([
           axios.get(
-            `/api/groupInvites/${selectedGroup._id}/members`,
+            `${BASE_URL}/groupInvites/${selectedGroup._id}/members`,
             { withCredentials: true }
           ),
-          axios.get(`/api/messages/${selectedGroup._id}`, {
+          axios.get(`${BASE_URL}/messages/${selectedGroup._id}`, {
             withCredentials: true,
           }),
           axios.get(
-            `/api/sharedRequests/group/${selectedGroup._id}`,
+            `${BASE_URL}/sharedRequests/group/${selectedGroup._id}`,
             { withCredentials: true }
           ),
         ]);
@@ -70,8 +70,8 @@ const ChatPopUp = ({ userId, onClose }) => {
               try {
                 const url =
                   sr.request.category === "API"
-                    ? `/api/rApi/getApiById/${sr.request.apiId}`
-                    : `/api/lib/getLibById/${sr.request.apiId}`;
+                    ? `${BASE_URL}/rApi/getApiById/${sr.request.apiId}`
+                    : `${BASE_URL}/lib/getLibById/${sr.request.apiId}`;
                 const apiRes = await axios.get(url, { withCredentials: true });
                 return { ...sr, apiData: apiRes.data };
               } catch {
@@ -109,7 +109,7 @@ const ChatPopUp = ({ userId, onClose }) => {
     if (!newMsg.trim() || !selectedGroup?._id) return;
     try {
       const res = await axios.post(
-        `/api/messages/${selectedGroup._id}`,
+        `${BASE_URL}/messages/${selectedGroup._id}`,
         { text: newMsg },
         { withCredentials: true }
       );

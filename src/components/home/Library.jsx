@@ -27,17 +27,17 @@ const Library = () => {
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareTitle, setShareTitle] = useState("");
   const [sharing, setSharing] = useState(false);
-
+const BASE_URL = import.meta.env.BASE_URL;
   const dropdownRef = useRef(null);
 
   // Fetch user + favorites
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("/api/user/user", { withCredentials: true });
+        const res = await axios.get(`${BASE_URL}/user/user`, { withCredentials: true });
         setUserId(res.data._id);
 
-        const favRes = await axios.get(`/api/store/${res.data._id}`);
+        const favRes = await axios.get(`${BASE_URL}/store/${res.data._id}`);
         setFavorites(favRes.data.libraries.map((item) => item._id));
       } catch (error) {
         console.error("User fetch error:", error.message);
@@ -51,10 +51,10 @@ const Library = () => {
     if (!userId) return;
     try {
       if (favorites.includes(libId)) {
-        await axios.delete("/api/store/removeLibrary", { data: { userId, libraryId: libId }, withCredentials: true });
+        await axios.delete(`${BASE_URL}/store/removeLibrary`, { data: { userId, libraryId: libId }, withCredentials: true });
         setFavorites(favorites.filter((id) => id !== libId));
       } else {
-        await axios.post("/api/store/addLibrary", { userId, libraryId: libId }, { withCredentials: true });
+        await axios.post(`${BASE_URL}/store/addLibrary`, { userId, libraryId: libId }, { withCredentials: true });
         setFavorites([...favorites, libId]);
       }
     } catch (err) {
@@ -66,7 +66,7 @@ const Library = () => {
   useEffect(() => {
     const fetchLibraries = async () => {
       try {
-        const res = await axios.get("/api/lib/getlibraries");
+        const res = await axios.get(`${BASE_URL}/lib/getlibraries`);
         setLibraries(res.data);
       } catch (err) {
         console.error("Error fetching libraries:", err.message);
@@ -121,7 +121,7 @@ const Library = () => {
 
   const fetchMyGroups = async () => {
     try {
-      const res = await axios.get("/api/groups/myGroups", { withCredentials: true });
+      const res = await axios.get(`${BASE_URL}/groups/myGroups`, { withCredentials: true });
       setGroups(res.data);
     } catch {
       toast.error("Failed to fetch your groups");
@@ -148,7 +148,7 @@ const Library = () => {
         response: null,
       };
 
-      const res = await axios.post(`/api/sharedRequests/groups/${shareGroupId}/share`, payload, { withCredentials: true });
+      const res = await axios.post(`${BASE_URL}/sharedRequests/groups/${shareGroupId}/share`, payload, { withCredentials: true });
       const shareId = res.data.shareId;
       if (shareId) {
         await navigator.clipboard.writeText(`${window.location.origin}/home?sharedId=${shareId}`);

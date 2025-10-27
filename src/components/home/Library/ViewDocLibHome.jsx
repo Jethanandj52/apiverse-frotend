@@ -10,7 +10,7 @@ const ViewDocLibHome = ({ setShowModal, id }) => {
   const [docData, setDocData] = useState(null);
   const [copied, setCopied] = useState(false);
   const [isDark, setIsDark] = useState(false);
-
+const BASE_URL = import.meta.env.BASE_URL;
   // Detect dark mode dynamically
   useEffect(() => {
     const updateDarkMode = () => setIsDark(document.body.classList.contains("dark"));
@@ -28,7 +28,7 @@ const ViewDocLibHome = ({ setShowModal, id }) => {
 
     const fetchLibById = async () => {
       try {
-        const res = await axios.get(`/api/lib/getLibById/${id}`);
+        const res = await axios.get(`${BASE_URL}/lib/getLibById/${id}`);
         setDocData(res.data);
       } catch (err) {
         toast.error("Error: " + (err.response?.data?.message || err.message), { autoClose: 2000 });

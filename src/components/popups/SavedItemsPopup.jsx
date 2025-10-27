@@ -3,7 +3,7 @@ import axios from "axios";
 import { FaTimes, FaHeart, FaRegHeart } from "react-icons/fa";
 import ViewDocLibHome from "../home/Library/ViewDocLibHome";
 import { AnimatePresence } from "framer-motion";
-import ViewDocApi from "../home/APi/ViewDocApi";
+import ViewDocApi from "../home${BASE_URL}/ViewDocApi";
 
 const SavedItemsPopup = ({ onClose }) => {
   const [savedData, setSavedData] = useState({ apis: [], libraries: [] });
@@ -13,7 +13,7 @@ const SavedItemsPopup = ({ onClose }) => {
   const [showDocLib, setShowDocLib] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [viewApiId, setViewApiId] = useState(null);
-
+const BASE_URL = import.meta.env.BASE_URL;
   // ✅ get userId from localStorage
   useEffect(() => {
     const storedId = localStorage.getItem("userId");
@@ -27,7 +27,7 @@ const SavedItemsPopup = ({ onClose }) => {
     const fetchSaved = async () => {
       if (!userId) return;
       try {
-        const res = await axios.get(`/api/store/${userId}`);
+        const res = await axios.get(`${BASE_URL}/store/${userId}`);
         setSavedData(res.data);
         setFavorites([
           ...res.data.apis.map((a) => a._id),
@@ -47,7 +47,7 @@ const SavedItemsPopup = ({ onClose }) => {
     try {
       if (favorites.includes(id)) {
         await axios.delete(
-          type === "api" ? "/api/store/removeApi" : "/api/store/removeLibrary",
+          type === "api" ? `${BASE_URL}/store/removeApi` : `${BASE_URL}/store/removeLibrary`,
           { data: type === "api" ? { userId, apiId: id } : { userId, libraryId: id } }
         );
         setFavorites(favorites.filter((f) => f !== id));

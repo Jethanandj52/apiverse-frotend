@@ -25,16 +25,16 @@ const Analytics = () => {
   const [countLib, setCountLib] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [pieData, setPieData] = useState([]);
-
+const BASE_URL = import.meta.env.BASE_URL;
   useEffect(() => {
     fetchApi();
   }, []);
 
   const fetchApi = async () => {
     try {
-      const resUser = await axios.get("/api/user/admin/users");
-      const resApi = await axios.get("/api/rApi/showApi");
-      const resLib = await axios.get("/api/lib/getLibraries");
+      const resUser = await axios.get(`${BASE_URL}/user/admin/users` );
+      const resApi = await axios.get(`${BASE_URL}/rApi/showApi`);
+      const resLib = await axios.get(`${BASE_URL}/lib/getLibraries`);
 
       const users = resUser.data;
       const apis = resApi.data;

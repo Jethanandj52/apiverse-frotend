@@ -13,7 +13,7 @@ const ViewDocLib = ({ setShowModal, id }) => {
   const [editingField, setEditingField] = useState(null);
   const [copied, setCopied] = useState(false);
   const [isDark, setIsDark] = useState(false);
-
+const BASE_URL = import.meta.env.BASE_URL;
   // Detect dark mode dynamically
   useEffect(() => {
     const updateDarkMode = () => setIsDark(document.body.classList.contains("dark"));
@@ -30,7 +30,7 @@ const ViewDocLib = ({ setShowModal, id }) => {
 
     const fetchLibById = async () => {
       try {
-        const res = await axios.get(`/api/lib/getLibById/${id}`);
+        const res = await axios.get(`${BASE_URL}/lib/getLibById/${id}`);
         setDocData(res.data);
         setForm(res.data);
       } catch (err) {
@@ -62,7 +62,7 @@ const ViewDocLib = ({ setShowModal, id }) => {
 
   const handleSaveField = async (field) => {
     try {
-      await axios.put(`/api/lib/updateLib/${id}`, form);
+      await axios.put(`${BASE_URL}/lib/updateLib/${id}`, form);
       setDocData(form);
       setEditingField(null);
     } catch (err) {

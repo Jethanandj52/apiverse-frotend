@@ -23,6 +23,8 @@ const Gemini = () => {
   const typingRef = useRef(true);
   const navigate = useNavigate();
 
+  const BASE_URL = import.meta.env.BASE_URL;
+
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
@@ -32,7 +34,7 @@ const Gemini = () => {
   // Fetch chat history
   const fetchChats = async () => {
     try {
-      const res = await axios.get(`/api/ai/history/${userId}`);
+      const res = await axios.get(`${BASE_URL}/ai/history/${userId}`);
       setChats(res.data);
       localStorage.setItem("chats", JSON.stringify(res.data));
     } catch (err) {
@@ -45,7 +47,7 @@ const Gemini = () => {
   // Load specific chat
   const loadChat = async (chatId) => {
     try {
-      const res = await axios.get(`/api/ai/chat/${chatId}`);
+      const res = await axios.get(`${BASE_URL}/ai/chat/${chatId}`);
       setActiveChat(res.data);
       setResponseText("");
     } catch (err) {
@@ -62,7 +64,7 @@ const Gemini = () => {
       setIsTyping(true);
       setResponseText("");
 
-      const res = await axios.post("/api/ai/gemini", {
+      const res = await axios.post(`${BASE_URL}/ai/gemini`, {
         prompt,
         userId,
         chatId: activeChat?._id || null,

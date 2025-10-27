@@ -31,7 +31,7 @@ const Postman = () => {
 
   const TOKEN_KEY = "api_tester_jwt";
   const userId = localStorage.getItem("userId");
-
+const BASE_URL = import.meta.env.BASE_URL;
   // ✅ Redirect if user not logged in
   useEffect(() => {
     if (!userId) navigate("/");
@@ -88,7 +88,7 @@ const Postman = () => {
   // ✅ Fetch user's history
   const fetchHistory = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/requests/myRequests", {
+      const res = await axios.get(`${BASE_URL}/requests/myRequests`, {
         withCredentials: true,
       });
       if (res.data && res.data.length > 0) {
@@ -114,7 +114,7 @@ const Postman = () => {
   // ✅ Save request to backend
   const saveRequestToHistory = async (reqData) => {
     try {
-      await axios.post("http://localhost:5000/requests/save", reqData, {
+      await axios.post(`${BASE_URL}/requests/save`, reqData, {
         withCredentials: true,
       });
     } catch (err) {
@@ -173,7 +173,7 @@ const Postman = () => {
       // ✅ Fixed AI Suggestion
       try {
         const aiRes = await axios.post(
-          "http://localhost:5000/ai/gemini",
+          `${BASE_URL}/ai/gemini`,
           {
             prompt: `Analyze this API response and provide suggestions:\n${JSON.stringify(
               res.data,
@@ -232,7 +232,7 @@ const Postman = () => {
   // ✅ Fetch Groups
   const fetchMyGroups = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/groups/myGroups", {
+      const res = await axios.get(`${BASE_URL}/groups/myGroups`, {
         withCredentials: true,
       });
       setGroups(res.data);
@@ -268,7 +268,7 @@ const Postman = () => {
       };
 
       const res = await axios.post(
-        `http://localhost:5000/sharedRequests/groups/${shareGroupId}/share`,
+        `${BASE_URL}/sharedRequests/groups/${shareGroupId}/share`,
         payload,
         { withCredentials: true }
       );
@@ -290,7 +290,7 @@ const Postman = () => {
   const fetchSharedAndPopulate = async (sharedId) => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/sharedRequests/${sharedId}`,
+        `${BASE_URL}/sharedRequests/${sharedId}`,
         { withCredentials: true }
       );
       const shared = res.data;

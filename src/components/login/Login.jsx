@@ -17,11 +17,11 @@ const Login = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const show = useRef(null);
   const navigate = useNavigate();
-
+const BASE_URL = import.meta.env.BASE_URL;
   const login = async () => {
     try {
       const res = await axios.post(
-        "/api/auth/login",
+        `${BASE_URL}/auth/login`,
         { email, password },
         { withCredentials: true }
         

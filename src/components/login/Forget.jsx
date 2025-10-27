@@ -9,13 +9,14 @@ import { motion } from "framer-motion";
 const Forget = () => {
   const [forgetEmail, setForgetEmail] = useState("");
   const navigate = useNavigate();
+  const BASE_URL = import.meta.env.BASE_URL;
 
   async function forgetPassword() {
     if (forgetEmail === "") {
       toast.warning("Please Enter Email", { autoClose: 2000 });
     } else {
       try {
-        const res = await axios.post("/api/auth/forget-password", {
+        const res = await axios.post(`${BASE_URL}/auth/forget-password`, {
           email: forgetEmail,
         });
 

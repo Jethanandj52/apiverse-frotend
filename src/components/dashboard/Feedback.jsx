@@ -12,11 +12,11 @@ const Feedbacks = () => {
   const [replyId, setReplyId] = useState(null);
   const [deleteId, setDeleteId] = useState(null); // ✅ Delete modal state
   const [loadingReply, setLoadingReply] = useState(false);
-
+const BASE_URL = import.meta.env.BASE_URL;
   // Load feedbacks
   const fetchFeedbacks = async () => {
     try {
-      const res = await axios.get("/api/feedback/showFeedback");
+      const res = await axios.get(`${BASE_URL}/feedback/showFeedback`);
       setFeedbacks(res.data);
     } catch (err) {
       console.error("Error fetching feedbacks:", err);
@@ -31,7 +31,7 @@ const Feedbacks = () => {
   // ✅ Delete feedback
   const confirmDelete = async () => {
     try {
-      await axios.delete(`/api/feedback/deleteFeedback/${deleteId}`);
+      await axios.delete(`${BASE_URL}/feedback/deleteFeedback/${deleteId}`);
       setFeedbacks(feedbacks.filter((fb) => fb._id !== deleteId));
       toast.success("Feedback deleted successfully!", { autoClose: 1500 });
       setDeleteId(null); // ✅ Close modal
@@ -48,7 +48,7 @@ const Feedbacks = () => {
 
     try {
       setLoadingReply(true);
-      await axios.post(`/api/feedback/replyFeedback/${replyId}`, {
+      await axios.post(`${BASE_URL}/feedback/replyFeedback/${replyId}`, {
         replyMessage: replyText,
       });
 

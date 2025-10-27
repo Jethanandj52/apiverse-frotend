@@ -15,7 +15,7 @@ const AddLib = ({ setShowModal,onLibraryAdded }) => {
   const [installation, setInstallation] = useState('');
   const [usage, setUsage] = useState('');
   const [integration, setIntegration] = useState('');
-
+const BASE_URL = import.meta.env.BASE_URL;
 
 const handleSubmit = async (e) => {
   e.preventDefault()
@@ -37,7 +37,7 @@ const handleSubmit = async (e) => {
   };
 
   try {
-  await axios.post("/api/lib/libraryAddDB", libraryData);
+  await axios.post(`${BASE_URL}/lib/libraryAddDB`, libraryData);
 onLibraryAdded();
                toast.success("Library Added Successful!", { autoClose: 1000 });
     

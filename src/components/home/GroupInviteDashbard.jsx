@@ -4,9 +4,9 @@ import SideBar from "./SideBar";
 import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import ViewDocApi from "./APi/ViewDocApi";
+import ViewDocApi from ".${BASE_URL}/ViewDocApi";
 import ViewDocLibHome from "./Library/ViewDocLibHome";
-
+const BASE_URL = import.meta.env.BASE_URL;
 // ====================== Modal Component ======================
 const Modal = ({ title, children, onClose }) => (
   <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
@@ -31,7 +31,7 @@ const GroupDetails = ({ group }) => {
     const fetchMembers = async () => {
       try {
         const res = await axios.get(
-          `/api/groupInvites/${group._id}/members`,
+          `${BASE_URL}/groupInvites/${group._id}/members`,
           { withCredentials: true }
         );
         setMembers(res.data);
@@ -89,8 +89,8 @@ const GroupChat = ({ groupId, userId }) => {
     const fetchData = async () => {
       try {
         const [msgRes, srRes] = await Promise.all([
-          axios.get(`/api/messages/${groupId}`, { withCredentials: true }),
-          axios.get(`/api/sharedRequests/group/${groupId}`, { withCredentials: true }),
+          axios.get(`${BASE_URL}/messages/${groupId}`, { withCredentials: true }),
+          axios.get(`${BASE_URL}/sharedRequests/group/${groupId}`, { withCredentials: true }),
         ]);
 
         setMessages(msgRes.data);
@@ -102,8 +102,8 @@ const GroupChat = ({ groupId, userId }) => {
               try {
                 const url =
                   sr.request.category === "API"
-                    ? `/api/rApi/getApiById/${sr.request.apiId}`
-                    : `/api/lib/getLibById/${sr.request.apiId}`;
+                    ? `${BASE_URL}/rApi/getApiById/${sr.request.apiId}`
+                    : `${BASE_URL}/lib/getLibById/${sr.request.apiId}`;
 
                 const res = await axios.get(url, { withCredentials: true });
                 return { ...sr, apiData: res.data };
@@ -141,7 +141,7 @@ const GroupChat = ({ groupId, userId }) => {
 
     try {
       const res = await axios.post(
-        `/api/messages/${groupId}`,
+        `${BASE_URL}/messages/${groupId}`,
         { text: newMsg },
         { withCredentials: true }
       );
@@ -372,7 +372,7 @@ const GroupInviteDashboard = ({ userId }) => {
 
   const fetchGroups = async () => {
     try {
-      const res = await axios.get("/api/groups/myGroups", { withCredentials: true });
+      const res = await axios.get("${BASE_URL}/groups/myGroups", { withCredentials: true });
       setGroups(res.data);
     } catch {
       toast.error("Failed to load groups");
@@ -381,7 +381,7 @@ const GroupInviteDashboard = ({ userId }) => {
 
   const fetchInvites = async () => {
     try {
-      const res = await axios.get("/api/groupInvites/myInvites", { withCredentials: true });
+      const res = await axios.get("${BASE_URL}/groupInvites/myInvites", { withCredentials: true });
       setInvites(res.data);
     } catch {
       toast.error("Failed to load invites");
@@ -394,7 +394,7 @@ const GroupInviteDashboard = ({ userId }) => {
     if (!newGroupName.trim()) return toast.error("Group name required");
     try {
       await axios.post(
-        "/api/groups/create",
+        "${BASE_URL}/groups/create",
         { name: newGroupName, description: newGroupDesc },
         { withCredentials: true }
       );
@@ -420,7 +420,7 @@ const GroupInviteDashboard = ({ userId }) => {
     if (!newGroupName.trim()) return toast.error("Group name required");
     try {
       await axios.put(
-        `/api/groups/update/${editingGroupId}`,
+        `${BASE_URL}/groups/update/${editingGroupId}`,
         { name: newGroupName, description: newGroupDesc },
         { withCredentials: true }
       );
@@ -439,7 +439,7 @@ const GroupInviteDashboard = ({ userId }) => {
   const handleDeleteGroup = async (groupId) => {
     if (!window.confirm("Are you sure you want to delete this group?")) return;
     try {
-      await axios.delete(`/api/groups/delete/${groupId}`, { withCredentials: true });
+      await axios.delete(`${BASE_URL}/groups/delete/${groupId}`, { withCredentials: true });
       toast.success("Group deleted!");
       setSelectedGroup(null);
       fetchGroups();
@@ -453,7 +453,7 @@ const GroupInviteDashboard = ({ userId }) => {
     e.preventDefault();
     if (!selectedGroupId || !receiverEmail) return toast.error("Select group and enter email");
     try {
-      await axios.post("/api/groupInvites/invite", { groupId: selectedGroupId, receiverEmail }, { withCredentials: true });
+      await axios.post("${BASE_URL}/groupInvites/invite", { groupId: selectedGroupId, receiverEmail }, { withCredentials: true });
       toast.success("Invite sent!");
       setReceiverEmail("");
       setSelectedGroupId("");
@@ -466,7 +466,7 @@ const GroupInviteDashboard = ({ userId }) => {
 
   const acceptInvite = async (inviteId) => {
     try {
-      await axios.post(`/api/groupInvites/accept/${inviteId}`, {}, { withCredentials: true });
+      await axios.post(`${BASE_URL}/groupInvites/accept/${inviteId}`, {}, { withCredentials: true });
       toast.success("Invite accepted!");
       fetchInvites();
       fetchGroups();
@@ -477,7 +477,7 @@ const GroupInviteDashboard = ({ userId }) => {
 
   const rejectInvite = async (inviteId) => {
     try {
-      await axios.post(`/api/groupInvites/reject/${inviteId}`, {}, { withCredentials: true });
+      await axios.post(`${BASE_URL}/groupInvites/reject/${inviteId}`, {}, { withCredentials: true });
       toast.success("Invite rejected!");
       fetchInvites();
     } catch {

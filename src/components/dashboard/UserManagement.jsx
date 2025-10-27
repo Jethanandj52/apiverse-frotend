@@ -11,11 +11,11 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
-
+const BASE_URL = import.meta.env.BASE_URL;
   // ✅ Fetch Users
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("/api/user/admin/users", {
+      const res = await axios.get(`${BASE_URL}/user/admin/users`, {
         withCredentials: true,
       });
       setUsers(res.data);
@@ -33,7 +33,7 @@ const UserManagement = () => {
   // ✅ Confirm and delete
   const handleDelete = async () => {
     try {
-      await axios.delete(`/api/user/admin/user/${selectedUserId}`, {
+      await axios.delete(`${BASE_URL}/user/admin/user/${selectedUserId}`, {
         withCredentials: true,
       });
       setUsers((prev) => prev.filter((user) => user._id !== selectedUserId));

@@ -8,11 +8,11 @@ const User = () => {
   const [userData, setUserData] = useState({ firstName: "", lastName: "", email: "" });
   const [visible, setVisible] = useState(true);
   const navigate = useNavigate();
-
+const BASE_URL = import.meta.env.BASE_URL;
   useEffect(() => {
     const getUser = async () => {
       try {
-        const res = await axios.get("/api/user/user", { withCredentials: true });
+        const res = await axios.get(`${BASE_URL}/user/user`, { withCredentials: true });
         setUserData(res.data);
 
         // ✅ userId localStorage me save
@@ -29,7 +29,7 @@ const User = () => {
 
   const logout = async () => {
     try {
-      await axios.post("/api/auth/logout", { email: userData.email }, { withCredentials: true });
+      await axios.post(`${BASE_URL}/auth/logout`, { email: userData.email }, { withCredentials: true });
       localStorage.clear();
       navigate("/");
     } catch (err) {

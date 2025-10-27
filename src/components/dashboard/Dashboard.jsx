@@ -24,16 +24,16 @@ const Dashboard = () => {
   const [callsToday, setCallsToday] = useState(0);
   const [libCallsToday, setLibCallsToday] = useState(0);
   const [securityAlerts, setSecurityAlerts] = useState(0);
-
+const BASE_URL = import.meta.env.BASE_URL;
   const fetchApi = async () => {
     try {
-      const resUser = await axios.get("/api/user/admin/users");
+      const resUser = await axios.get(`${BASE_URL}/user/admin/users`);
       setCountUser(resUser.data);
 
-      const resApi = await axios.get("/api/rApi/showApi");
+      const resApi = await axios.get(`${BASE_URL}/rApi/showApi`);
       setCountApi(resApi.data);
 
-      const resLib = await axios.get("/api/lib/getLibraries");
+      const resLib = await axios.get(`${BASE_URL}/lib/getLibraries`);
       setCountLib(resLib.data);
     } catch (error) {
       console.log("❌ Error fetching data:", error.message);

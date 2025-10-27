@@ -31,7 +31,7 @@ const Nav = ({ sideBar, setSidebar }) => {
 
   const userId = localStorage.getItem("userId");
   const notifRef = useRef();
-
+const BASE_URL = import.meta.env.BASE_URL;
   // ✅ Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -48,7 +48,7 @@ const Nav = ({ sideBar, setSidebar }) => {
     const fetchNotifications = async () => {
       if (!userId) return;
       try {
-        const res = await axios.get(`/api/notifications/${userId}`);
+        const res = await axios.get(`${BASE_URL}/notifications/${userId}`);
         setNotifications(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         setNotifications([]);

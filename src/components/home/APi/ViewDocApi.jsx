@@ -15,7 +15,7 @@ const ViewDocApi = ({ setShowModal, id }) => {
   const [docExample, setDocExample] = useState("");
   const [integrationCode, setIntegrationCode] = useState("");
   const [aiCode, setAiCode] = useState("");
-
+const BASE_URL = import.meta.env.BASE_URL;
   // ✅ New loader state
   const [loadingAi, setLoadingAi] = useState(false);
 
@@ -40,7 +40,7 @@ const ViewDocApi = ({ setShowModal, id }) => {
 
     const fetchApiData = async () => {
       try {
-        const res = await axios.get(`/api/rApi/getApiById/${id}`);
+        const res = await axios.get(`${BASE_URL}/rApi/getApiById/${id}`);
         setDocData(res.data);
 
         setDocExample(res.data?.documentation?.example || "");
@@ -94,7 +94,7 @@ ${jsCode}`;
 
     try {
       setLoadingAi(true); // start loader
-      const res = await axios.post("/api/ai/gemini", {
+      const res = await axios.post("${BASE_URL}/ai/gemini", {
         prompt,
         language: targetLang,
       });

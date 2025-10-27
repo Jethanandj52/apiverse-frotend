@@ -10,7 +10,7 @@ const Contact = () => {
   const [subject, setSubject] = useState("");
   const [wholeProblem, setWholeProblem] = useState("");
   const [message, setMessage] = useState("");
-
+const BASE_URL = import.meta.env.BASE_URL;
   // ✅ Load user data from localStorage once on mount
   useEffect(() => {
     const storedName = localStorage.getItem("firstName") || "";

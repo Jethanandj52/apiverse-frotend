@@ -20,10 +20,10 @@ const LibraryManagement = () => {
   const [categorySearch, setCategorySearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-
+const BASE_URL = import.meta.env.BASE_URL;
   const fetchLibraries = async () => {
     try {
-      const res = await axios.get("/api/lib/getlibraries");
+      const res = await axios.get(`${BASE_URL}/lib/getlibraries`);
       setLibraries(res.data);
     } catch (err) {
       console.error("Failed to fetch libraries:", err);
@@ -33,7 +33,7 @@ const LibraryManagement = () => {
   const confirmDelete = async () => {
     if (!libraryToDelete) return;
     try {
-      await axios.delete(`/api/lib/deletelibrary/${libraryToDelete}`);
+      await axios.delete(`${BASE_URL}/lib/deletelibrary/${libraryToDelete}`);
       setLibraryToDelete(null);
       fetchLibraries();
     } catch (err) {

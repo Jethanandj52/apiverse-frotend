@@ -14,6 +14,7 @@ const ViewDoc = ({ setShowModal, id }) => {
   const [copied, setCopied] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
+  const BASE_URL = import.meta.env.BASE_URL;
   // Detect dark mode dynamically
   useEffect(() => {
     const updateDarkMode = () => setIsDark(document.body.classList.contains("dark"));
@@ -27,7 +28,7 @@ const ViewDoc = ({ setShowModal, id }) => {
     if (!id) return;
     const fetchApiById = async () => {
       try {
-        const res = await axios.get(`/api/rApi/getApiById/${id}`);
+        const res = await axios.get(`${BASE_URL}/rApi/getApiById/${id}`);
         setDocData(res.data);
         setForm(res.data);
       } catch (err) {
@@ -42,7 +43,7 @@ const handleSaveField = async (field, isNested = false) => {
     const updated = { ...form };
 
     const res = await axios.put(
-      `/api/rApi/updateApi/${id}`,   // ✅ proxy use kiya, direct 5000 mat likho
+      `${BASE_URL}/rApi/updateApi/${id}`,   // ✅ proxy use kiya, direct 5000 mat likho
       updated,
       {
         headers: { "Content-Type": "application/json" },

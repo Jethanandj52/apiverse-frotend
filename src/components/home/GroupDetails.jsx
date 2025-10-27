@@ -6,10 +6,10 @@ const GroupDetails = ({ group, onClose, refreshGroups }) => {
   const [members, setMembers] = useState([]);
   const [groupName, setGroupName] = useState(group.name);
   const [groupDesc, setGroupDesc] = useState(group.description);
-
+const BASE_URL = import.meta.env.BASE_URL;
   const fetchMembers = async () => {
     try {
-      const res = await axios.get(`/api/groups/${group._id}/members`, { withCredentials: true });
+      const res = await axios.get(`${BASE_URL}/groups/${group._id}/members`, { withCredentials: true });
       setMembers(res.data);
     } catch (err) {
       console.error(err);
@@ -23,7 +23,7 @@ const GroupDetails = ({ group, onClose, refreshGroups }) => {
 
   const removeMember = async (memberId) => {
     try {
-      await axios.post(`/api/groups/${group._id}/removeMember`, { memberId }, { withCredentials: true });
+      await axios.post(`${BASE_URL}/groups/${group._id}/removeMember`, { memberId }, { withCredentials: true });
       toast.success("Member removed");
       fetchMembers();
     } catch (err) {
@@ -34,7 +34,7 @@ const GroupDetails = ({ group, onClose, refreshGroups }) => {
 
   const updateGroup = async () => {
     try {
-      await axios.post(`/api/groups/${group._id}/update`, { name: groupName, description: groupDesc }, { withCredentials: true });
+      await axios.post(`${BASE_URL}/groups/${group._id}/update`, { name: groupName, description: groupDesc }, { withCredentials: true });
       toast.success("Group updated");
       refreshGroups();
     } catch (err) {

@@ -20,6 +20,7 @@ const ApiAdd = ({ setShowModal,onApiAdded }) => {
   const [integrationDescription, setIntegrationDescription] = useState('');
   const [setupSteps, setSetupSteps] = useState('');
   const [codeExamples, setCodeExamples] = useState('');
+  const BASE_URL = import.meta.env.BASE_URL;
 
   const handleSubmit = async (e) => {
     const apiData = {
@@ -51,7 +52,7 @@ const ApiAdd = ({ setShowModal,onApiAdded }) => {
 
     // console.log("Submitted API Data:", apiData);
     try {
-      await axios.post('/api/rApi/addApiDB', apiData)
+      await axios.post(`${BASE_URL}/rApi/addApiDB`, apiData)
       onApiAdded()
       
            toast.success("Api Added Successful!", { autoClose: 1000 });

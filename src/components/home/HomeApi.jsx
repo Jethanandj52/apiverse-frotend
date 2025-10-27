@@ -3,7 +3,7 @@ import Nav from "../home/Nav";
 import SideBar from "./SideBar";
 import { FaPlug, FaHeart, FaRegHeart } from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
-import ViewDocApi from "./APi/ViewDocApi";
+import ViewDocApi from ".${BASE_URL}/ViewDocApi";
 import axios from "axios";
 import SavedItemsPopup from "../popups/SavedItemsPopup";
 import { toast } from "react-toastify";
@@ -25,6 +25,8 @@ const HomeApi = () => {
   const [groups, setGroups] = useState([]);
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareTitle, setShareTitle] = useState("");
+
+  const BASE_URL = import.meta.env.BASE_URL;
   const [sharing, setSharing] = useState(false);
 
   const dropdownRef = useRef(null);
@@ -33,10 +35,10 @@ const HomeApi = () => {
   useEffect(() => {
     const fetchUserAndFavorites = async () => {
       try {
-        const userRes = await axios.get("/api/user/user", { withCredentials: true });
+        const userRes = await axios.get(`${BASE_URL}/user/user`, { withCredentials: true });
         setUserId(userRes.data._id);
 
-        const favRes = await axios.get(`/api/store/${userRes.data._id}`);
+        const favRes = await axios.get(`${BASE_URL}/store/${userRes.data._id}`);
         const apiFavorites = favRes.data?.apis?.map((item) => item._id) || [];
         setFavorites(apiFavorites);
       } catch {
@@ -50,7 +52,7 @@ const HomeApi = () => {
   useEffect(() => {
     const fetchApi = async () => {
       try {
-        const res = await axios.get("/api/rApi/showApi");
+        const res = await axios.get(`${BASE_URL}/rApi/showApi`);
         setApi(res.data);
       } catch {}
     };
@@ -64,7 +66,7 @@ const HomeApi = () => {
 
   const fetchMyGroups = async () => {
     try {
-      const res = await axios.get("/api/groups/myGroups", { withCredentials: true });
+      const res = await axios.get(`${BASE_URL}/groups/myGroups`, { withCredentials: true });
       setGroups(res.data);
     } catch {
       toast.error("Failed to fetch your groups");
@@ -109,10 +111,10 @@ const HomeApi = () => {
     if (!userId) return;
     try {
       if (favorites.includes(apiId)) {
-        await axios.delete("/api/store/removeApi", { data: { userId, apiId }, withCredentials: true });
+        await axios.delete(`${BASE_URL}/store/removeApi`, { data: { userId, apiId }, withCredentials: true });
         setFavorites((prev) => prev.filter((id) => id !== apiId));
       } else {
-        await axios.post("/api/store/addApi", { userId, apiId }, { withCredentials: true });
+        await axios.post(`${BASE_URL}/store/addApi`, { userId, apiId }, { withCredentials: true });
         setFavorites((prev) => [...prev, apiId]);
       }
     } catch {}
@@ -146,7 +148,7 @@ const HomeApi = () => {
       };
 
       const res = await axios.post(
-        `/api/sharedRequests/groups/${shareGroupId}/share`,
+        `${BASE_URL}/sharedRequests/groups/${shareGroupId}/share`,
         payload,
         { withCredentials: true }
       );
