@@ -379,7 +379,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchGroups = async () => {
     try {
-      const res = await axios.get("${BASE_URL}/groups/myGroups", { withCredentials: true });
+      const res = await axios.get(`${BASE_URL}/groups/myGroups`, { withCredentials: true });
       setGroups(res.data);
     } catch {
       toast.error("Failed to load groups");
@@ -388,7 +388,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchInvites = async () => {
     try {
-      const res = await axios.get("${BASE_URL}/groupInvites/myInvites", { withCredentials: true });
+      const res = await axios.get(`${BASE_URL}/groupInvites/myInvites`, { withCredentials: true });
       setInvites(res.data);
     } catch {
       toast.error("Failed to load invites");
@@ -460,7 +460,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     e.preventDefault();
     if (!selectedGroupId || !receiverEmail) return toast.error("Select group and enter email");
     try {
-      await axios.post("${BASE_URL}/groupInvites/invite", { groupId: selectedGroupId, receiverEmail }, { withCredentials: true });
+      await axios.post("$`{BASE_URL}/groupInvites/invite", { groupId: selectedGroupId, receiverEmail }, { withCredentials: true });
       toast.success("Invite sent!");
       setReceiverEmail("");
       setSelectedGroupId("");
