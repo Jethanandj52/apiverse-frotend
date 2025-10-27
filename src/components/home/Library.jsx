@@ -66,7 +66,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     const fetchLibraries = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/lib/getlibraries`);
+        const res = await axios.get(`${BASE_URL}/lib/getlibraries`, { withCredentials: true });
         setLibraries(res.data);
       } catch (err) {
         console.error("Error fetching libraries:", err.message);
