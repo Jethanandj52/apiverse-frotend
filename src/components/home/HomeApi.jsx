@@ -9,7 +9,7 @@ import SavedItemsPopup from "../popups/SavedItemsPopup";
 import { toast } from "react-toastify";
 
 const HomeApi = () => {
-  const [sideBar, setSidebar] = useState(true);
+  const [sideBar, setSidebar] = useState(false); // 🔹 mobile by default hidden
   const [viewApiId, setViewApiId] = useState(null);
   const [api, setApi] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("Popular");
@@ -21,7 +21,6 @@ const HomeApi = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Share modal states
   const [shareApi, setShareApi] = useState(null);
   const [groups, setGroups] = useState([]);
   const [shareGroupId, setShareGroupId] = useState("");
@@ -31,7 +30,6 @@ const HomeApi = () => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const dropdownRef = useRef(null);
 
-  // ---------------- Fetch user and favorites ----------------
   useEffect(() => {
     const fetchUserAndFavorites = async () => {
       try {
@@ -48,14 +46,13 @@ const HomeApi = () => {
     fetchUserAndFavorites();
   }, []);
 
-  // ---------------- Fetch APIs ----------------
   useEffect(() => {
     const fetchApi = async () => {
       try {
         setLoading(true);
         const res = await axios.get(`${BASE_URL}/rApi/showApi`, { withCredentials: true });
         setApi(res.data);
-      } catch (err) {
+      } catch {
         toast.error("Failed to fetch APIs");
       } finally {
         setLoading(false);
@@ -64,7 +61,6 @@ const HomeApi = () => {
     fetchApi();
   }, []);
 
-  // ---------------- Fetch groups ----------------
   useEffect(() => {
     if (shareApi) fetchMyGroups();
   }, [shareApi]);
@@ -78,7 +74,6 @@ const HomeApi = () => {
     }
   };
 
-  // ---------------- Close dropdown on outside click ----------------
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -89,7 +84,6 @@ const HomeApi = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ---------------- Filter & Search ----------------
   const categories = ["Popular", "All", ...new Set(api.map((item) => item.category))];
 
   let filteredApis =
@@ -111,15 +105,21 @@ const HomeApi = () => {
     cat.toLowerCase().includes(categorySearch.toLowerCase())
   );
 
-  // ---------------- Favorites ----------------
   const toggleFavorite = async (apiId) => {
     if (!userId) return;
     try {
       if (favorites.includes(apiId)) {
-        await axios.delete(`${BASE_URL}/store/removeApi`, { data: { userId, apiId }, withCredentials: true });
+        await axios.delete(`${BASE_URL}/store/removeApi`, {
+          data: { userId, apiId },
+          withCredentials: true,
+        });
         setFavorites((prev) => prev.filter((id) => id !== apiId));
       } else {
-        await axios.post(`${BASE_URL}/store/addApi`, { userId, apiId }, { withCredentials: true });
+        await axios.post(
+          `${BASE_URL}/store/addApi`,
+          { userId, apiId },
+          { withCredentials: true }
+        );
         setFavorites((prev) => [...prev, apiId]);
       }
     } catch {
@@ -127,7 +127,6 @@ const HomeApi = () => {
     }
   };
 
-  // ---------------- Share ----------------
   const openShareModal = (apiItem) => {
     setShareApi(apiItem);
     setShareGroupId("");
@@ -174,117 +173,120 @@ const HomeApi = () => {
     }
   };
 
-  // ---------------- UI ----------------
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white overflow-hidden min-h-screen">
-      <Nav sideBar={sideBar} setSidebar={setSidebar} />
+    <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
+      {/* Sidebar */}
       <SideBar sideBar={sideBar} />
 
-      <div
-        className={`pt-[70px] transition-all duration-300 ${
-          sideBar ? "pl-[220px]" : "pl-[60px]"
-        } min-h-screen overflow-y-auto p-4 sm:p-6`}
-      >
-        <div className="pt-10 px-5 sm:px-4 md:px-8 pb-10">
-          <div className="flex flex-wrap text-2xl sm:text-3xl font-bold text-blue-400 mb-6 items-center gap-2">
-            <FaPlug /> API's Management
-          </div>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Nav sideBar={sideBar} setSidebar={setSidebar} />
 
-          {/* Search & Category */}
-          <div className="mt-6 flex flex-col md:flex-row justify-between gap-6 md:gap-4 items-stretch md:items-center bg-gray-100 dark:bg-gray-900 py-2">
-            <div className="w-full md:w-1/2 relative" ref={dropdownRef}>
-              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                Filter by Category:
-              </label>
-              <input
-                type="text"
-                placeholder="Select Category..."
-                value={categorySearch}
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                onChange={(e) => {
-                  setCategorySearch(e.target.value);
-                  setDropdownOpen(true);
-                }}
-                className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {dropdownOpen && (
-                <div className="absolute z-50 w-full max-h-48 overflow-auto mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
-                  {filteredCategories.length > 0 ? (
-                    filteredCategories.map((cat) => (
-                      <div
-                        key={cat}
-                        className="px-4 py-2 cursor-pointer hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 transition-colors"
-                        onClick={() => {
-                          setSelectedCategory(cat);
-                          setCategorySearch(cat);
-                          setDropdownOpen(false);
-                        }}
-                      >
-                        {cat}
+        {/* ✅ Responsive wrapper like Library page */}
+        <div
+          className={`pt-[70px] transition-all duration-300 ease-in-out 
+          ${sideBar ? "sm:pl-[220px]" : "sm:pl-[60px]"} 
+          pl-0 min-h-screen overflow-y-auto p-6`}
+        >
+          <div className="pt-4 px-4 md:px-8 pb-10">
+            <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-6 flex items-center gap-2">
+              <FaPlug /> API's Management
+            </div>
+
+            {/* Category + Search */}
+            <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center bg-gray-100 dark:bg-gray-900 py-2">
+              <div className="w-full md:w-64 relative" ref={dropdownRef}>
+                <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                  Filter by Category:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Select Category..."
+                  value={categorySearch}
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  onChange={(e) => {
+                    setCategorySearch(e.target.value);
+                    setDropdownOpen(true);
+                  }}
+                  className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {dropdownOpen && (
+                  <div className="absolute z-50 w-full max-h-48 overflow-auto mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map((cat) => (
+                        <div
+                          key={cat}
+                          className="px-4 py-2 cursor-pointer hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 transition-colors"
+                          onClick={() => {
+                            setSelectedCategory(cat);
+                            setCategorySearch(cat);
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          {cat}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                        No categories found
                       </div>
-                    ))
-                  ) : (
-                    <div className="px-4 py-2 text-gray-500 dark:text-gray-400">
-                      No categories found
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full md:w-64">
+                <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                  Search API:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search in list..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* API Cards */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+              {loading ? (
+                <div className="col-span-full flex justify-center items-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
                 </div>
-              )}
-            </div>
-
-            <div className="w-full md:w-1/2">
-              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                Search API:
-              </label>
-              <input
-                type="text"
-                placeholder="Search in list..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          {/* 🔹 Loader */}
-          {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
-              {filteredApis.length > 0 ? (
+              ) : filteredApis.length > 0 ? (
                 filteredApis.map((Api) => (
                   <div
                     key={Api._id}
                     className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
                   >
                     <div className="flex justify-between items-center border-b pb-3 border-blue-400">
-                      <h3 className="font-bold text-blue-500 text-xl sm:text-2xl">{Api.name}</h3>
+                      <h3 className="font-bold text-blue-500 text-2xl">{Api.name}</h3>
                       <button onClick={() => toggleFavorite(Api._id)}>
                         {favorites.includes(Api._id) ? (
-                          <FaHeart className="text-red-500 text-lg sm:text-xl" />
+                          <FaHeart className="text-red-500 text-xl" />
                         ) : (
-                          <FaRegHeart className="text-gray-400 text-lg sm:text-xl hover:text-red-500" />
+                          <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />
                         )}
                       </button>
                     </div>
-                    <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">{Api.description}</p>
-                    <div className="leading-7 sm:leading-8 text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{Api.description}</p>
+                    <div className="leading-8 text-gray-700 dark:text-gray-300">
                       <strong>Language:</strong> {Api.language} <br />
                       <strong>Category:</strong> {Api.category} <br />
                       <strong>Version:</strong> {Api.version} <br />
                       <strong>License:</strong> {Api.license}
                     </div>
-                    <div className="flex flex-wrap justify-center items-center mt-4 gap-3 sm:gap-4">
+                    <div className="flex justify-center items-center mt-4 gap-4">
                       <button
-                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm sm:text-base"
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 transition-transform"
                         onClick={() => setViewApiId(Api._id)}
                       >
                         View Docs
                       </button>
                       <button
-                        className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 text-sm sm:text-base"
+                        className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
                         onClick={() => openShareModal(Api)}
                       >
                         Share
@@ -300,7 +302,7 @@ const HomeApi = () => {
                 </div>
               )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -314,7 +316,6 @@ const HomeApi = () => {
             setFavorites={setFavorites}
           />
         )}
-
         {shareApi && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
             <motion.div

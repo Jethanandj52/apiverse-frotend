@@ -47,11 +47,11 @@ const Team = () => {
       <SideBar sideBar={sideBar} />
 
       {/* ✅ Main Content */}
-      <div
-        className={`pt-[70px] transition-all duration-300 ease-in-out ${
-          sideBar ? "pl-[220px]" : "pl-[60px]"
-        } h-screen overflow-y-auto px-4`}
-      >
+     <div
+          className={`pt-[70px] transition-all duration-300 ease-in-out 
+          ${sideBar ? "sm:pl-[220px]" : "sm:pl-[60px]"} 
+          pl-0 min-h-screen overflow-y-auto p-6 h-screen`}
+        >
         <div className="px-4 pt-10 pb-10">
           <h2 className="text-center text-3xl font-bold text-blue-500 mb-10">
             👥 Meet Our Team

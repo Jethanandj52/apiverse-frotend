@@ -496,8 +496,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-900 dark:text-white">
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
       <SideBar sideBar={sideBar} />
-
-      <div className={`pt-[70px] transition-all duration-300 ${sideBar ? "pl-[220px]" : "pl-[60px]"} min-h-screen overflow-y-auto p-6`}>
+<div
+          className={`pt-[70px] transition-all duration-300 ease-in-out 
+          ${sideBar ? "sm:pl-[220px]" : "sm:pl-[60px]"} 
+          pl-0 min-h-screen overflow-y-auto p-6`}
+        >
         {/* Top Buttons */}
         <div className="pt-10 px-4 md:px-8 pb-10">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">

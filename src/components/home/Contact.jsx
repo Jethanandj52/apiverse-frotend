@@ -62,10 +62,10 @@ const BASE_URL = import.meta.env.BASE_URL;
 
       {/* ✅ Main Content */}
       <div
-        className={`pt-[70px] transition-all duration-300 ease-in-out ${
-          sideBar ? "pl-[220px]" : "pl-[60px]"
-        } min-h-screen overflow-y-auto dark:bg-gray-900 bg-gray-100 text-black dark:text-white p-4`}
-      >
+          className={`pt-[70px] transition-all duration-300 ease-in-out 
+          ${sideBar ? "sm:pl-[220px]" : "sm:pl-[60px]"} 
+          pl-5 min-h-screen overflow-y-auto p-6`}
+        >
         <div className="max-w-7xl mx-auto">
           <h2 className="text-center text-3xl font-bold text-blue-500 mb-8 mt-6">
             Contact Us

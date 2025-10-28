@@ -16,14 +16,10 @@ const Home = () => {
       <SideBar sideBar={sideBar} />
 
       <div
-        className={`pt-[70px] transition-all duration-300 ease-in-out
-          ${
-            sideBar
-              ? "pl-[60px] sm:pl-[60px] md:pl-[180px] lg:pl-[220px]"
-              : "pl-[60px]"
-          }
-          min-h-screen overflow-y-auto px-3 sm:px-5 md:px-10`}
-      >
+          className={`pt-[70px] transition-all duration-300 ease-in-out 
+          ${sideBar ? "sm:pl-[220px]" : "sm:pl-[60px]"} 
+          pl-0 min-h-screen overflow-y-auto p-6`}
+        >
         <div className="pt-10 px-5 sm:px-5 pb-10 max-w-6xl mx-auto text-sm sm:text-base md:text-lg leading-relaxed">
           {/* Tabs */}
           <div className="flex flex-wrap gap-3 sm:space-x-5 border-b border-gray-400 dark:border-gray-700 mb-8">

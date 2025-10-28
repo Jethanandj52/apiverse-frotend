@@ -14,7 +14,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import { ModeToggle } from "../mode-toggle";
-import User from "../popups/User"; // ✅ Import your existing popup component
+import User from "../popups/User";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -27,9 +27,8 @@ const SideBar = ({ sideBar, setSidebar }) => {
     email: "",
   });
 
-  const [showUserPopup, setShowUserPopup] = useState(false); // ✅ Added for popup toggle
+  const [showUserPopup, setShowUserPopup] = useState(false);
 
-  // ✅ Fetch logged-in user
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -46,7 +45,6 @@ const SideBar = ({ sideBar, setSidebar }) => {
     getUser();
   }, []);
 
-  // ✅ Logout
   const logout = async () => {
     try {
       await axios.post(
@@ -61,7 +59,6 @@ const SideBar = ({ sideBar, setSidebar }) => {
     }
   };
 
-  // ✅ Close sidebar when clicking outside (on mobile)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
@@ -74,13 +71,21 @@ const SideBar = ({ sideBar, setSidebar }) => {
 
   return (
     <>
+      {/* ✅ Sidebar (Responsive for mobile/tablet/desktop) */}
       <div
         ref={sidebarRef}
         className={`fixed top-0 left-0 h-screen pt-[50px]
         bg-white dark:bg-gray-900 border-r dark:border-gray-700
         text-black dark:text-white z-40 transition-all duration-300 ease-in-out
         flex flex-col justify-between shadow-md
-        ${sideBar ? "w-[230px]" : "w-[70px]"}`}
+        ${
+          sideBar
+            ? "w-[230px]" // expanded mode
+            : "w-[70px]"   // collapsed mode (tablet/desktop)
+        }
+        ${sideBar ? "translate-x-0" : "-translate-x-full"} 
+        sm:translate-x-0
+        sm:fixed sm:top-0 sm:left-0 sm:h-screen`}
       >
         <div className="flex flex-col justify-between h-full p-3">
           {/* ✅ Nav Links */}
@@ -96,46 +101,40 @@ const SideBar = ({ sideBar, setSidebar }) => {
             <NavItem to="/contact" icon={<FaBook />} label="Contact" sideBar={sideBar} />
           </div>
 
-          {/* ✅ Bottom section (Theme + User visible only on mobile) */}
+          {/* ✅ Bottom Options */}
           <div className="flex flex-col gap-2 mt-4">
             {/* 🌙 Theme Toggle (mobile only) */}
-            <div
-              className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-200 
-                dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer
-                sm:hidden"
-            >
-              <span className="flex items-center justify-center min-w-[24px] text-blue-500">
-                <ModeToggle />
-              </span>
-              <span
-                className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
-                  sideBar ? "opacity-100 w-auto" : "opacity-0 w-0"
-                }`}
-              >
-                Theme
-              </span>
-            </div>
+         {/* 🌙 Theme Toggle (mobile only) */}
+<div
+  className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-200 
+    dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer
+    sm:hidden"
+>
+  <span className="flex items-center justify-center min-w-[24px] text-blue-500">
+    <ModeToggle />
+  </span>
+  <span className={`${sideBar ? "opacity-100 w-auto" : "opacity-0 w-0"} transition-all duration-300`}>
+    Theme
+  </span>
+</div>
 
-            {/* 👤 User (mobile only) */}
-            <div
-              onClick={() => setShowUserPopup(!showUserPopup)} // ✅ toggle popup
-              className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-200 
-                dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer
-                sm:hidden"
-            >
-              <span className="flex items-center justify-center min-w-[24px] text-blue-500">
-                <FaUser size={18} />
-              </span>
-              <span
-                className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
-                  sideBar ? "opacity-100 w-auto" : "opacity-0 w-0"
-                }`}
-              >
-                Profile
-              </span>
-            </div>
+{/* 👤 User (mobile only) */}
+<div
+  onClick={() => setShowUserPopup(!showUserPopup)}
+  className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-200 
+    dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer
+    sm:hidden"
+>
+  <span className="flex items-center justify-center min-w-[24px] text-blue-500">
+    <FaUser size={18} />
+  </span>
+  <span className={`${sideBar ? "opacity-100 w-auto" : "opacity-0 w-0"} transition-all duration-300`}>
+    Profile
+  </span>
+</div>
 
-            {/* 🚪 Logout (always visible) */}
+
+            {/* 🚪 Logout */}
             <div
               onClick={logout}
               className="flex items-center gap-3 p-3 hover:bg-red-200 
@@ -149,13 +148,19 @@ const SideBar = ({ sideBar, setSidebar }) => {
         </div>
       </div>
 
-      {/* ✅ User popup appears when icon clicked */}
+      {/* ✅ Overlay Background (mobile only) */}
+      {sideBar && (
+        <div
+          onClick={() => setSidebar(false)}
+          className="fixed inset-0 bg-black/40 sm:hidden z-30"
+        ></div>
+      )}
+
       {showUserPopup && <User onClose={() => setShowUserPopup(false)} />}
     </>
   );
 };
 
-// ✅ Reusable Nav Item
 const NavItem = ({ to, icon, label, sideBar }) => (
   <Link
     to={to}

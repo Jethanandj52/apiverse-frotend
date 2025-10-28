@@ -322,11 +322,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
       <SideBar sideBar={sideBar} />
 
-      <div
-        className={`pt-[70px] transition-all duration-300 ${
-          sideBar ? "pl-[220px]" : "pl-[60px]"
-        } p-6`}
-      >
+     <div
+          className={`pt-[70px] transition-all duration-300 ease-in-out 
+          ${sideBar ? "sm:pl-[220px]" : "sm:pl-[60px]"} 
+          pl-0 min-h-screen overflow-y-auto p-6`}
+        >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <motion.h2 className="text-2xl font-bold text-blue-500 flex items-center gap-2">
