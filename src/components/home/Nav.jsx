@@ -31,7 +31,6 @@ const Nav = ({ sideBar, setSidebar }) => {
   const notifRef = useRef();
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  /* ✅ Close dropdown on outside click */
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
@@ -42,7 +41,6 @@ const Nav = ({ sideBar, setSidebar }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* ✅ Fetch Notifications */
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!userId) return;
@@ -58,7 +56,6 @@ const Nav = ({ sideBar, setSidebar }) => {
     if (showNotifications) fetchNotifications();
   }, [userId, showNotifications]);
 
-  /* ✅ Fetch Saved Count (APIs + Libraries) */
   useEffect(() => {
     const fetchSavedCount = async () => {
       if (!userId) return;
@@ -124,8 +121,8 @@ const Nav = ({ sideBar, setSidebar }) => {
           <FaComments className={iconStyle} />
         </div>
 
-        {/* 🌙 Mode Toggle */}
-        <div className={iconWrapperStyle}>
+        {/* 🌙 Mode Toggle — hidden on mobile */}
+        <div className={`${iconWrapperStyle} hidden sm:flex`}>
           <ModeToggle />
         </div>
 
@@ -136,7 +133,6 @@ const Nav = ({ sideBar, setSidebar }) => {
             className={iconStyle}
             onClick={() => setShowNotifications(!showNotifications)}
           />
-
           {notifications.length > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full px-[5px] py-[1px] border border-white shadow">
               {notifications.filter((n) => !n.read).length ||
@@ -188,7 +184,6 @@ const Nav = ({ sideBar, setSidebar }) => {
                               <span className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-1 shrink-0"></span>
                             )}
                           </div>
-
                           <small className="text-gray-500 dark:text-gray-400 text-xs mt-1 block">
                             {new Date(notif.createdAt).toLocaleString()}
                           </small>
@@ -211,9 +206,9 @@ const Nav = ({ sideBar, setSidebar }) => {
           </AnimatePresence>
         </div>
 
-        {/* 👤 User */}
+        {/* 👤 User — hidden on mobile */}
         <div
-          className={iconWrapperStyle}
+          className={`${iconWrapperStyle} hidden sm:flex`}
           onClick={() => setShowUserPopup(!showUserPopup)}
         >
           <FaUser className={iconStyle} />
