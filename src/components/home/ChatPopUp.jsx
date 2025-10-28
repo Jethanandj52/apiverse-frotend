@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { X } from "lucide-react";
+import { X, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import ViewDocApi from "./APi/ViewDocApi";
@@ -16,12 +16,15 @@ const ChatPopUp = ({ userId, onClose }) => {
   const [expanded, setExpanded] = useState(null);
   const [viewApiId, setViewApiId] = useState(null);
   const [viewLibId, setViewLibId] = useState(null);
+  const [showSidebar, setShowSidebar] = useState(false);
   const chatEndRef = useRef(null);
   const lastSentByUserRef = useRef(false);
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const sidebarRef = useRef(null);
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const isValidObjectId = (id) => /^[a-f\d]{24}$/i.test(id);
 
-  // ✅ Fetch all groups
+  // ✅ Fetch groups
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -36,30 +39,27 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     fetchGroups();
   }, []);
 
-  // ✅ Fetch group chat data
+  // ✅ Fetch group data
   useEffect(() => {
     if (!selectedGroup?._id || !isValidObjectId(selectedGroup._id)) return;
 
     const fetchGroupData = async () => {
       try {
         const [memberRes, msgRes, srRes] = await Promise.all([
-          axios.get(
-            `${BASE_URL}/groupInvites/${selectedGroup._id}/members`,
-            { withCredentials: true }
-          ),
+          axios.get(`${BASE_URL}/groupInvites/${selectedGroup._id}/members`, {
+            withCredentials: true,
+          }),
           axios.get(`${BASE_URL}/messages/${selectedGroup._id}`, {
             withCredentials: true,
           }),
-          axios.get(
-            `${BASE_URL}/sharedRequests/group/${selectedGroup._id}`,
-            { withCredentials: true }
-          ),
+          axios.get(`${BASE_URL}/sharedRequests/group/${selectedGroup._id}`, {
+            withCredentials: true,
+          }),
         ]);
 
         setMembers(memberRes.data);
         setMessages(msgRes.data);
 
-        // Enrich shared requests (API / Library)
         const enrichedSR = await Promise.all(
           srRes.data.map(async (sr) => {
             if (
@@ -121,6 +121,25 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     }
   };
 
+  // ✅ Close sidebar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target) &&
+        !event.target.closest(".menu-btn")
+      ) {
+        setShowSidebar(false);
+      }
+    };
+    if (showSidebar) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showSidebar]);
+
   // ✅ Combine messages + sharedRequests
   const chatItems = [
     ...messages.map((m) => ({ type: "msg", data: m })),
@@ -138,45 +157,71 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
         {/* ===== Close Button ===== */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 z-10"
+          className="absolute top-3 right-3 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 z-20"
         >
           <X size={20} />
         </button>
 
-        {/* ===== Left Side: Groups ===== */}
-        <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r dark:border-gray-700 p-4 overflow-y-auto">
-          <h2 className="text-lg font-bold text-blue-600 mb-3">💬 Your Groups</h2>
-          {groups.length === 0 ? (
-            <p className="text-gray-500 text-sm">No groups available</p>
-          ) : (
-            <ul className="space-y-2">
-              {groups.map((g) => (
-                <li
-                  key={g._id}
-                  onClick={() => setSelectedGroup(g)}
-                  className={`p-3 rounded-lg cursor-pointer transition ${
-                    selectedGroup?._id === g._id
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-                  }`}
-                >
-                  <p className="font-semibold">{g.name}</p>
-                  <p className="text-xs opacity-80">{g.description}</p>
-                </li>
-              ))}
-            </ul>
-          )}
+        {/* ===== Mobile Menu Button ===== */}
+        <div className="absolute top-3 left-3 md:hidden z-20">
+          <button
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 menu-btn"
+          >
+            <Menu size={22} />
+          </button>
         </div>
 
-        {/* ===== Right Side: Chat ===== */}
-        <div className="w-full md:w-2/3 flex flex-col p-4">
+        {/* ===== Sidebar (Groups) ===== */}
+        <AnimatePresence>
+          {(showSidebar || window.innerWidth >= 768) && (
+            <motion.div
+              ref={sidebarRef}
+              initial={{ x: -300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -300, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`absolute md:static top-0 left-0 h-full w-64 md:w-1/3 bg-white dark:bg-gray-800 border-r dark:border-gray-700 p-4 overflow-y-auto z-30 md:z-0 rounded-l-2xl shadow-lg md:shadow-none`}
+            >
+              <h2 className="text-lg font-bold text-blue-600 mb-3">
+                💬 Your Groups
+              </h2>
+              {groups.length === 0 ? (
+                <p className="text-gray-500 text-sm">No groups available</p>
+              ) : (
+                <ul className="space-y-2">
+                  {groups.map((g) => (
+                    <li
+                      key={g._id}
+                      onClick={() => {
+                        setSelectedGroup(g);
+                        setShowSidebar(false);
+                      }}
+                      className={`p-3 rounded-lg cursor-pointer transition ${
+                        selectedGroup?._id === g._id
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      }`}
+                    >
+                      <p className="font-semibold">{g.name}</p>
+                      <p className="text-xs opacity-80">{g.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ===== Chat Section ===== */}
+        <div className="flex-1 flex flex-col p-4 md:ml-0 mt-10 md:mt-0 overflow-hidden">
           {!selectedGroup ? (
             <div className="flex-1 flex justify-center items-center text-gray-500 text-sm">
               Select a group to start chatting 💬
             </div>
           ) : (
             <>
-              {/* ===== Group Header ===== */}
+              {/* ===== Header ===== */}
               <div className="border-b dark:border-gray-700 pb-2 mb-3 flex justify-between items-center">
                 <h3 className="font-bold text-indigo-500 truncate">
                   {selectedGroup.name}
@@ -196,7 +241,6 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                   chatItems.map((item, idx) => {
                     const isUser = item.data.sender?._id === userId;
 
-                    // === Normal Messages ===
                     if (item.type === "msg") {
                       const time = new Date(item.data.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -205,7 +249,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                       return (
                         <div
                           key={idx}
-                          className={`p-2 rounded-lg max-w-xs break-words shadow ${
+                          className={`p-2 rounded-lg max-w-[85%] sm:max-w-xs break-words shadow ${
                             isUser
                               ? "self-end bg-blue-500 text-white ml-auto"
                               : "bg-gray-200 dark:bg-gray-700"
@@ -220,11 +264,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                       );
                     }
 
-                    // === Shared Request: API ===
-                    if (
-                      item.type === "sr" &&
-                      item.data.request.category === "API"
-                    ) {
+                    if (item.type === "sr" && item.data.request.category === "API") {
                       const api = item.data.apiData;
                       const time = new Date(item.data.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -239,10 +279,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                       return (
                         <div
                           key={idx}
-                          className="bg-gray-200 dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3"
+                          className="bg-gray-200 dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 space-y-3"
                         >
-                          <div className="flex justify-between border-b pb-3 border-blue-400">
-                            <h3 className="font-bold text-blue-500 text-2xl">
+                          <div className="flex justify-between border-b pb-2 border-blue-400">
+                            <h3 className="font-bold text-blue-500 text-lg sm:text-2xl">
                               {api.name}
                             </h3>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -252,7 +292,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                           <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
                             {api.description || "No description available"}
                           </p>
-                          <div className="leading-8 text-gray-700 dark:text-gray-300">
+                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-6">
                             <strong>Language:</strong> {api.language || "-"} <br />
                             <strong>Category:</strong> {api.category || "-"} <br />
                             <strong>Version:</strong> {api.version || "-"} <br />
@@ -270,11 +310,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                       );
                     }
 
-                    // === Shared Request: Library ===
-                    if (
-                      item.type === "sr" &&
-                      item.data.request.category === "Library"
-                    ) {
+                    if (item.type === "sr" && item.data.request.category === "Library") {
                       const lib = item.data.apiData;
                       const time = new Date(item.data.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -289,10 +325,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                       return (
                         <div
                           key={idx}
-                          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:scale-105 transition-all"
+                          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 space-y-3 hover:scale-[1.02] transition-all"
                         >
-                          <div className="flex justify-between border-b pb-3 border-blue-400">
-                            <h3 className="font-bold text-blue-500 text-2xl">
+                          <div className="flex justify-between border-b pb-2 border-blue-400">
+                            <h3 className="font-bold text-blue-500 text-lg sm:text-2xl">
                               {lib.name}
                             </h3>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -302,8 +338,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                           <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
                             {lib.description || "No description available"}
                           </p>
-                          <div className="leading-8 text-gray-700 dark:text-gray-300">
-                            <strong>Language:</strong> {lib.language?.join(", ") || "-"} <br />
+                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-6">
+                            <strong>Language:</strong>{" "}
+                            {lib.language?.join(", ") || "-"} <br />
                             <strong>Category:</strong> {lib.category || "-"} <br />
                             <strong>Version:</strong> {lib.version || "-"} <br />
                             <strong>License:</strong> {lib.license || "-"}
@@ -320,7 +357,6 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                       );
                     }
 
-                    // === Shared Request: Other ===
                     if (
                       item.type === "sr" &&
                       item.data.request.category !== "API" &&
@@ -337,7 +373,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                           onClick={() =>
                             setExpanded(expandedSR ? null : item.data._id)
                           }
-                          className={`p-2 rounded-lg max-w-xs cursor-pointer ${
+                          className={`p-2 rounded-lg max-w-[85%] sm:max-w-xs cursor-pointer ${
                             isUser
                               ? "self-end bg-blue-500 text-white ml-auto"
                               : "bg-gray-200 dark:bg-gray-700"
@@ -346,9 +382,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                           <p className="font-semibold">
                             {item.data.sender.firstName}
                           </p>
-                          <p className="font-semibold">
-                            {item.data.title} 📂
-                          </p>
+                          <p className="font-semibold">{item.data.title} 📂</p>
                           <p className="text-xs opacity-70">
                             Click to {expandedSR ? "collapse" : "expand"}
                           </p>
@@ -375,8 +409,8 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                 <div ref={chatEndRef} />
               </div>
 
-              {/* ===== Message Input ===== */}
-              <form onSubmit={sendMessage} className="flex gap-2">
+              {/* ===== Input Box ===== */}
+              <form onSubmit={sendMessage} className="flex gap-2 w-full">
                 <input
                   value={newMsg}
                   onChange={(e) => setNewMsg(e.target.value)}
