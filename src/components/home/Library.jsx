@@ -55,10 +55,17 @@ const Library = () => {
     if (!userId) return;
     try {
       if (favorites.includes(libId)) {
-        await axios.delete(`${BASE_URL}/store/removeLibrary`, { data: { userId, libraryId: libId }, withCredentials: true });
+        await axios.delete(`${BASE_URL}/store/removeLibrary`, {
+          data: { userId, libraryId: libId },
+          withCredentials: true,
+        });
         setFavorites(favorites.filter((id) => id !== libId));
       } else {
-        await axios.post(`${BASE_URL}/store/addLibrary`, { userId, libraryId: libId }, { withCredentials: true });
+        await axios.post(
+          `${BASE_URL}/store/addLibrary`,
+          { userId, libraryId: libId },
+          { withCredentials: true }
+        );
         setFavorites([...favorites, libId]);
       }
     } catch (err) {
@@ -155,7 +162,11 @@ const Library = () => {
         response: null,
       };
 
-      const res = await axios.post(`${BASE_URL}/sharedRequests/groups/${shareGroupId}/share`, payload, { withCredentials: true });
+      const res = await axios.post(
+        `${BASE_URL}/sharedRequests/groups/${shareGroupId}/share`,
+        payload,
+        { withCredentials: true }
+      );
       const shareId = res.data.shareId;
       if (shareId) {
         await navigator.clipboard.writeText(`${window.location.origin}/home?sharedId=${shareId}`);
@@ -171,90 +182,127 @@ const Library = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
+    <div className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white overflow-hidden min-h-screen">
+      <Nav sideBar={sideBar} setSidebar={setSidebar} />
       <SideBar sideBar={sideBar} />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Nav sideBar={sideBar} setSidebar={setSidebar} />
+      <div
+        className={`pt-[70px] transition-all duration-300 ${
+          sideBar ? "pl-[220px]" : "pl-[60px]"
+        } min-h-screen overflow-y-auto p-4 sm:p-6`}
+      >
+        <div className="pt-4 px-5 sm:px-4 md:px-8 pb-10">
+          <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-6 flex items-center gap-2">
+            <FaBox /> Library
+          </div>
 
-        <div className={`pt-[70px] transition-all duration-300 ease-in-out ${sideBar ? "pl-[220px]" : "pl-[60px]"} min-h-screen overflow-y-auto p-6`}>
-          <div className="pt-4 px-4 md:px-8 pb-10">
-            <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-6 flex items-center gap-2">
-              <FaBox /> Library
-            </div>
-
-            {/* Category + Search */}
-            <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center bg-gray-100 dark:bg-gray-900 py-2">
-              <div className="w-full md:w-64 relative" ref={dropdownRef}>
-                <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">Filter by Category:</label>
-                <input
-                  type="text"
-                  placeholder="Select Category..."
-                  value={categorySearch}
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  onChange={(e) => {
-                    setCategorySearch(e.target.value);
-                    setDropdownOpen(true);
-                  }}
-                  className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {dropdownOpen && (
-                  <div className="absolute z-50 w-full max-h-48 overflow-auto mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
-                    {filteredCategories.length > 0 ? (
-                      filteredCategories.map((cat) => (
-                        <div key={cat} className="px-4 py-2 cursor-pointer hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 transition-colors" onClick={() => { setSelectedCategory(cat); setCategorySearch(cat); setDropdownOpen(false); }}>
-                          {cat}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2 text-gray-500 dark:text-gray-400">No categories found</div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="w-full md:w-64">
-                <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">Search Library:</label>
-                <input
-                  type="text"
-                  placeholder="Search in list..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Library Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-              {loading ? (
-                <div className="col-span-full flex justify-center items-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
+          {/* Category + Search */}
+          <div className="mt-6 flex flex-col md:flex-row justify-between gap-6 md:gap-4 items-stretch md:items-center bg-gray-100 dark:bg-gray-900 py-2">
+            <div className="w-full md:w-1/2 relative" ref={dropdownRef}>
+              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Filter by Category:
+              </label>
+              <input
+                type="text"
+                placeholder="Select Category..."
+                value={categorySearch}
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                onChange={(e) => {
+                  setCategorySearch(e.target.value);
+                  setDropdownOpen(true);
+                }}
+                className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {dropdownOpen && (
+                <div className="absolute z-50 w-full max-h-48 overflow-auto mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
+                  {filteredCategories.length > 0 ? (
+                    filteredCategories.map((cat) => (
+                      <div
+                        key={cat}
+                        className="px-4 py-2 cursor-pointer hover:bg-blue-500 hover:text-white dark:hover:bg-blue-600 transition-colors"
+                        onClick={() => {
+                          setSelectedCategory(cat);
+                          setCategorySearch(cat);
+                          setDropdownOpen(false);
+                        }}
+                      >
+                        {cat}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                      No categories found
+                    </div>
+                  )}
                 </div>
-              ) : filteredLibraries.length > 0 ? (
+              )}
+            </div>
+
+            <div className="w-full md:w-1/2">
+              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Search Library:
+              </label>
+              <input
+                type="text"
+                placeholder="Search in list..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Library Grid */}
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
+              {filteredLibraries.length > 0 ? (
                 filteredLibraries.map((lib) => (
-                  <div key={lib._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer">
+                  <div
+                    key={lib._id}
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
+                  >
                     <div className="flex justify-between items-center border-b pb-3 border-blue-400">
-                      <h3 className="font-bold text-blue-500 text-2xl">{lib.name}</h3>
+                      <h3 className="font-bold text-blue-500 text-xl sm:text-2xl">
+                        {lib.name}
+                      </h3>
                       <button onClick={() => toggleFavorite(lib._id)}>
-                        {favorites.includes(lib._id) ? <FaHeart className="text-red-500 text-xl" /> : <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />}
+                        {favorites.includes(lib._id) ? (
+                          <FaHeart className="text-red-500 text-lg sm:text-xl" />
+                        ) : (
+                          <FaRegHeart className="text-gray-400 text-lg sm:text-xl hover:text-red-500" />
+                        )}
                       </button>
                     </div>
 
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{lib.description}</p>
+                    <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
+                      {lib.description}
+                    </p>
 
-                    <div className="leading-8 text-gray-700 dark:text-gray-300">
+                    <div className="leading-7 sm:leading-8 text-gray-700 dark:text-gray-300">
                       <strong>Language:</strong> {lib.language?.join(", ")} <br />
                       <strong>Category:</strong> {lib.category} <br />
                       <strong>Version:</strong> {lib.version} <br />
                       <strong>License:</strong> {lib.license}
                     </div>
 
-                    <div className="flex justify-center items-center mt-4 gap-4">
-                      <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 transition-transform" onClick={() => { setSelectedId(lib._id); setShowDocLib(true); }}>
+                    <div className="flex flex-wrap justify-center items-center mt-4 gap-3 sm:gap-4">
+                      <button
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm sm:text-base"
+                        onClick={() => {
+                          setSelectedId(lib._id);
+                          setShowDocLib(true);
+                        }}
+                      >
                         View Docs
                       </button>
-                      <button className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600" onClick={() => openShareModal(lib)}>
+                      <button
+                        className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 text-sm sm:text-base"
+                        onClick={() => openShareModal(lib)}
+                      >
                         Share
                       </button>
                     </div>
@@ -262,38 +310,72 @@ const Library = () => {
                 ))
               ) : (
                 <div className="col-span-full text-center py-10">
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">No libraries available</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">
+                    No libraries available
+                  </p>
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* Docs popup */}
-      {showDocLib && selectedId && <ViewDocLibHome setShowModal={setShowDocLib} id={selectedId} />}
+      {showDocLib && selectedId && (
+        <ViewDocLibHome setShowModal={setShowDocLib} id={selectedId} />
+      )}
 
       {/* Share modal */}
       <AnimatePresence>
         {shareLib && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-gray-800 rounded-lg p-6 w-[600px] shadow-lg">
-              <h3 className="text-lg font-bold text-purple-600 mb-4">Share Library to Group</h3>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-[600px] shadow-lg"
+            >
+              <h3 className="text-lg font-bold text-purple-600 mb-4">
+                Share Library to Group
+              </h3>
               <form onSubmit={shareToGroup} className="space-y-3">
                 <label className="block">
                   <div className="text-sm mb-1">Select Group</div>
-                  <select value={shareGroupId} onChange={(e) => setShareGroupId(e.target.value)} className="w-full p-3 rounded border">
+                  <select
+                    value={shareGroupId}
+                    onChange={(e) => setShareGroupId(e.target.value)}
+                    className="w-full p-3 rounded border"
+                  >
                     <option value="">-- choose group --</option>
-                    {groups.map((g) => <option key={g._id} value={g._id}>{g.name}</option>)}
+                    {groups.map((g) => (
+                      <option key={g._id} value={g._id}>
+                        {g.name}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label className="block">
                   <div className="text-sm mb-1">Title (optional)</div>
-                  <input value={shareTitle} onChange={(e) => setShareTitle(e.target.value)} className="w-full p-3 rounded border" />
+                  <input
+                    value={shareTitle}
+                    onChange={(e) => setShareTitle(e.target.value)}
+                    className="w-full p-3 rounded border"
+                  />
                 </label>
-                <div className="flex gap-2 justify-end">
-                  <button type="button" onClick={() => setShareLib(null)} className="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                  <button type="submit" disabled={sharing} className="px-4 py-2 bg-purple-600 text-white rounded">{sharing ? "Sharing..." : "Share"}</button>
+                <div className="flex gap-2 justify-end flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setShareLib(null)}
+                    className="px-4 py-2 bg-gray-300 rounded w-full sm:w-auto"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sharing}
+                    className="px-4 py-2 bg-purple-600 text-white rounded w-full sm:w-auto"
+                  >
+                    {sharing ? "Sharing..." : "Share"}
+                  </button>
                 </div>
               </form>
             </motion.div>
