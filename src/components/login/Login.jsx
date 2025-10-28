@@ -17,26 +17,21 @@ const Login = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const show = useRef(null);
   const navigate = useNavigate();
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const login = async () => {
     try {
       const res = await axios.post(
         `${BASE_URL}/auth/login`,
         { email, password },
         { withCredentials: true }
-        
       );
- 
- 
-
-      // toast.success("Login Successful!", { autoClose: 1000 });
 
       const emailFromRes = res.data.email || res.data.user?.email;
       localStorage.setItem("firstName", res.data.firstName || res.data.user?.firstName);
       localStorage.setItem("lastName", res.data.lastName || res.data.user?.lastName);
       localStorage.setItem("email", emailFromRes);
       localStorage.setItem("token", res.data.token || res.data.user?.token);
-  
       localStorage.setItem("userId", res.data.id || res.data.user?._id);
       localStorage.setItem("isLoggedIn", "true");
 
@@ -66,51 +61,47 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     }
   };
 
-  // Welcome Animation
-if (showWelcome) {
-  return (
-    <motion.div
-      className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-700 via-purple-700 to-blue-600 text-white"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      {/* Bouncing Emoji */}
+  // Welcome animation
+  if (showWelcome) {
+    return (
       <motion.div
-        className="text-6xl mb-6"
-        animate={{ y: [0, -20, 0] }}
-        transition={{ duration: 1.2, repeat: Infinity }}
-      >
-        🚀
-      </motion.div>
-
-      {/* Glowing Text */}
-      <motion.h1
-        className="text-3xl md:text-4xl font-extrabold text-center drop-shadow-lg"
+        className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-700 via-purple-700 to-blue-600 text-white px-4"
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 1, 0.6, 1] }}
-        transition={{ duration: 1.8, repeat: Infinity }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
       >
-        Welcome to <span className="text-yellow-300">APIverse</span> 🌐
-      </motion.h1>
+        <motion.div
+          className="text-6xl mb-6"
+          animate={{ y: [0, -20, 0] }}
+          transition={{ duration: 1.2, repeat: Infinity }}
+        >
+          🚀
+        </motion.div>
 
-      {/* Subtext */}
-      <motion.p
-        className="text-sm md:text-base mt-3 text-gray-200"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        Setting up your experience...
-      </motion.p>
-    </motion.div>
-  );
-}
+        <motion.h1
+          className="text-3xl md:text-4xl font-extrabold text-center drop-shadow-lg"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0.6, 1] }}
+          transition={{ duration: 1.8, repeat: Infinity }}
+        >
+          Welcome to <span className="text-yellow-300">APIverse</span> 🌐
+        </motion.h1>
 
+        <motion.p
+          className="text-sm md:text-base mt-3 text-gray-200 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          Setting up your experience...
+        </motion.p>
+      </motion.div>
+    );
+  }
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center relative px-4"
+      className="min-h-screen flex items-center justify-center bg-cover bg-center relative px-4 sm:px-6 md:px-10"
       style={{ backgroundImage: `url(${background})` }}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
@@ -119,9 +110,9 @@ if (showWelcome) {
         initial={{ opacity: 0, scale: 0.3 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1, ease: "easeOut" }}
-        className="relative z-10 bg-white/20 rounded-xl p-6 md:p-8 shadow-2xl backdrop-blur-xl w-full max-w-sm md:max-w-md lg:max-w-lg"
+        className="relative z-10 bg-white/20 rounded-xl p-6 sm:p-8 md:p-10 shadow-2xl backdrop-blur-xl w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl"
       >
-        <h2 className="text-3xl font-extrabold text-center text-white mb-6">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center text-white mb-6">
           Sign In to APIverse
         </h2>
 
@@ -132,7 +123,7 @@ if (showWelcome) {
             placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 rounded bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 sm:py-3 rounded bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -143,29 +134,32 @@ if (showWelcome) {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 pr-10 rounded bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 sm:py-3 pr-10 rounded bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <img
             src={showpassword}
             alt="toggle password"
             onClick={togglePasswordVisibility}
             ref={show}
-            className="absolute top-2.5 right-3 w-5 md:w-6 cursor-pointer"
+            className="absolute top-2.5 right-3 w-5 sm:w-6 cursor-pointer"
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between text-sm text-blue-200 mb-4 gap-2 sm:gap-0">
-          <Link to="/Forget" className="underline text-center sm:text-left">
+        <div className="flex flex-col sm:flex-row justify-between text-sm text-blue-200 mb-4 gap-3 sm:gap-0 text-center sm:text-left">
+          <Link to="/Forget" className="underline">
             Forgot password?
           </Link>
-          <span className="text-center sm:text-right">
-            No account? <Link to="/SignUp" className="underline">Sign Up</Link>
+          <span>
+            No account?{" "}
+            <Link to="/SignUp" className="underline">
+              Sign Up
+            </Link>
           </span>
         </div>
 
         <button
           onClick={login}
-          className="w-full py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition-all cursor-pointer active:scale-90"
+          className="w-full py-2 sm:py-3 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition-all cursor-pointer active:scale-95"
         >
           Sign In
         </button>
