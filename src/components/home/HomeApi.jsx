@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Nav from "../home/Nav";
 import SideBar from "./SideBar";
-import { FaPlug, FaHeart, FaRegHeart, FaPlus } from "react-icons/fa";
+import { FaPlug, FaHeart, FaRegHeart, FaPlus, FaCopy } from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
 import ViewDocApi from "./APi/ViewDocApi";
 import axios from "axios";
