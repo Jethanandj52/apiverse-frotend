@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Nav from "../home/Nav";
 import SideBar from "./SideBar";
-import { FaPlug, FaHeart, FaRegHeart, FaPlus, FaCopy } from "react-icons/fa";
+import { FaPlug, FaHeart, FaRegHeart, FaPlus, FaExternalLinkAlt, FaExternalLinkSquareAlt } from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
 import ViewDocApi from "./APi/ViewDocApi";
 import axios from "axios";
@@ -293,7 +293,7 @@ const HomeApi = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  <FaExternalLinkAlt /> Open
+                  <FaExternalLinkSquareAlt /> Open
                 </a>
               </div>
             </div>
