@@ -24,29 +24,45 @@ const Dashboard = () => {
   const [callsToday, setCallsToday] = useState(0);
   const [libCallsToday, setLibCallsToday] = useState(0);
   const [securityAlerts, setSecurityAlerts] = useState(0);
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // Fetch data function
   const fetchApi = async () => {
     try {
-      const resUser = await axios.get(`${BASE_URL}/user/admin/users`);
+      // Users (admin route)
+      const resUser = await axios.get(`${BASE_URL}/user/admin/users`, {
+        withCredentials: true, // ✅ important for cookie auth
+      });
       setCountUser(resUser.data);
 
-      const resApi = await axios.get(`${BASE_URL}/rApi/showApi`);
+      // APIs
+      const resApi = await axios.get(`${BASE_URL}/rApi/showApi`, {
+        withCredentials: true,
+      });
       setCountApi(resApi.data);
 
-      const resLib = await axios.get(`${BASE_URL}/lib/getLibraries`);
+      // Libraries
+      const resLib = await axios.get(`${BASE_URL}/lib/getLibraries`, {
+        withCredentials: true,
+      });
       setCountLib(resLib.data);
+
     } catch (error) {
-      console.log("❌ Error fetching data:", error.message);
+      console.log("❌ Error fetching data:", error.response?.data || error.message);
     }
   };
 
+  // Initial fetch
   useEffect(() => {
     fetchApi();
+
     setCallsToday(Math.floor(Math.random() * 10) + 1);
     setLibCallsToday(Math.floor(Math.random() * 10) + 1);
     setSecurityAlerts(Math.floor(Math.random() * 20) + 1);
   }, []);
 
+  // Chart data
   const chartData = [
     { name: "Users", value: countUser.length },
     { name: "APIs", value: countApi.length },
@@ -73,7 +89,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
             <FaHome /> Dashboard Overview
           </div>
 
-          {/* Stats Cards with Animation */}
+          {/* Stats Cards */}
           <motion.div
             ref={statsRef}
             initial={{ opacity: 0, y: 40 }}
@@ -100,7 +116,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
             ))}
           </motion.div>
 
-          {/* Chart Section with Animation */}
+          {/* Chart Section */}
           <motion.div
             ref={chartRef}
             initial={{ opacity: 0, y: 60 }}
@@ -118,33 +134,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#4B5563" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: "#9CA3AF", fontSize: 14 }}
-                  axisLine={{ stroke: "#6B7280" }}
-                  tickLine={false}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  tick={{ fill: "#9CA3AF", fontSize: 14 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1F2937",
-                    border: "none",
-                    borderRadius: "8px",
-                  }}
-                  labelStyle={{ color: "#93C5FD" }}
-                  itemStyle={{ color: "#E5E7EB" }}
-                />
-                <Bar
-                  dataKey="value"
-                  fill="url(#barColor)"
-                  radius={[10, 10, 0, 0]}
-                  barSize={40}
-                />
+                <XAxis dataKey="name" tick={{ fill: "#9CA3AF", fontSize: 14 }} axisLine={{ stroke: "#6B7280" }} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fill: "#9CA3AF", fontSize: 14 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: "#1F2937", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#93C5FD" }} itemStyle={{ color: "#E5E7EB" }} />
+                <Bar dataKey="value" fill="url(#barColor)" radius={[10, 10, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </motion.div>

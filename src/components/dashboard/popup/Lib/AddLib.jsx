@@ -37,7 +37,9 @@ const handleSubmit = async (e) => {
   };
 
   try {
-  await axios.post(`${BASE_URL}/lib/libraryAddDB`, libraryData);
+  await axios.post(`${BASE_URL}/lib/libraryAddDB`, {
+        withCredentials: true,
+      }, libraryData);
 onLibraryAdded();
                toast.success("Library Added Successful!", { autoClose: 1000 });
     

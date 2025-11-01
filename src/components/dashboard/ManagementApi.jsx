@@ -1,55 +1,62 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Nav from "../home/Nav";
 import SideBar from "./SideBar";
-import { FaPlug, FaTrash } from "react-icons/fa";
-import ApiAdd from "./popup/api/ApiAdd";
+import { FaBox, FaTrash } from "react-icons/fa";
+import AddLib from "./popup/Lib/AddLib";
+import ConfirmDeletePopup from "../popups/ConfirmDeletePopup";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
-import ConfirmDeletePopup from "../popups/ConfirmDeletePopup";
-import ViewDoc from "./popup/api/ViewDoc";
+import ViewDocLib from "./popup/Lib/ViewDocLib";
 
-const ManagementApi = () => {
+const LibraryManagement = () => {
   const [sideBar, setSidebar] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [viewApiId, setViewApiId] = useState(null);
-  const [apiToDelete, setApiToDelete] = useState(null);
-  const [api, setApi] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [libraries, setLibraries] = useState([]);
+  const [libraryToDelete, setLibraryToDelete] = useState(null);
+  const [viewLibId, setViewLibId] = useState(null);
 
-  // Search + Filter
-  const [selectedCategory, setSelectedCategory] = useState("Popular");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [categorySearch, setCategorySearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const fetchApi = async () => {
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // Fetch libraries
+  const fetchLibraries = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/rApi/showApi`);
-      setApi(res.data);
-    } catch (error) {
-      console.log("error:", error.message);
+      const res = await axios.get(`${BASE_URL}/lib/getlibraries`, {
+        withCredentials: true, // ✅ important for cookie-based auth
+      });
+      setLibraries(res.data);
+    } catch (err) {
+      console.error("Failed to fetch libraries:", err);
+    }
+  };
+
+  // Delete library
+  const confirmDelete = async () => {
+    if (!libraryToDelete) return;
+    try {
+      await axios.delete(`${BASE_URL}/lib/deletelibrary/${libraryToDelete}`, {
+        withCredentials: true,
+      });
+      setLibraryToDelete(null);
+      fetchLibraries();
+    } catch (err) {
+      console.error("Error deleting:", err);
     }
   };
 
   useEffect(() => {
-    fetchApi();
+    fetchLibraries();
   }, []);
-
-  const confirmDelete = async () => {
-    if (!apiToDelete) return;
-    try {
-      await axios.delete(`${BASE_URL}/rApi/deleteApi/${apiToDelete}`);
-      setApiToDelete(null);
-      fetchApi();
-    } catch (err) {
-      console.error("Error Deleting Api", err);
-    }
-  };
 
   // Close dropdown on outside click
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
     };
@@ -57,28 +64,26 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Categories
-  const categories = ["Popular", "All", ...new Set(api.map((item) => item.category))];
-
-  // Filter APIs
-  let filteredApis =
-    selectedCategory === "Popular"
-      ? api.filter((item) => item.popular)
-      : selectedCategory === "All"
-      ? api
-      : api.filter((item) => item.category === selectedCategory);
-
-  if (searchQuery.trim() !== "") {
-    filteredApis = filteredApis.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
-
+  // Unique categories
+  const categories = ["All", ...new Set(libraries.map((lib) => lib.category))];
   const filteredCategories = categories.filter((cat) =>
     cat.toLowerCase().includes(categorySearch.toLowerCase())
   );
+
+  // Filter libraries
+  let filteredLibraries = libraries;
+  if (selectedCategory !== "All") {
+    filteredLibraries = filteredLibraries.filter(
+      (lib) => lib.category === selectedCategory
+    );
+  }
+  if (searchQuery.trim() !== "") {
+    filteredLibraries = filteredLibraries.filter(
+      (lib) =>
+        lib.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lib.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white overflow-hidden">
@@ -92,25 +97,34 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       >
         <div className="pt-10 px-5 pb-10">
           <div className="flex items-center gap-5 text-3xl font-bold">
-            <FaPlug /> API's Management
+            <FaBox /> Library Management
           </div>
 
           <div
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-blue-900 text-white rounded text-center py-2 px-4 font-semibold cursor-pointer mt-10 hover:bg-blue-700 active:scale-95 transition-all w-fit"
+            onClick={() => setShowModal(true)}
+            className="bg-blue-900 text-white rounded text-center py-2 px-4 font-semibold cursor-pointer mt-6 hover:bg-blue-700 active:scale-95 transition-all w-fit"
           >
-            Add API
+            Add LIB
           </div>
 
+          <AnimatePresence>
+            {showModal && <AddLib setShowModal={setShowModal} onLibraryAdded={fetchLibraries} />}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {viewLibId && <ViewDocLib setShowModal={setViewLibId} id={viewLibId} />}
+          </AnimatePresence>
+
           {/* Filter + Search */}
-          <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center">
+          <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center bg-gray-100 dark:bg-gray-900 py-2">
+            {/* Category Filter */}
             <div className="w-full md:w-64 relative" ref={dropdownRef}>
               <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
                 Filter by Category:
               </label>
               <input
                 type="text"
-                placeholder="Select Category..."
+                placeholder="Filter by category..."
                 value={categorySearch}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 onChange={(e) => {
@@ -144,13 +158,14 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
               )}
             </div>
 
+            {/* Search Bar */}
             <div className="w-full md:w-64">
               <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                Search API:
+                Search Library:
               </label>
               <input
                 type="text"
-                placeholder="Search in list..."
+                placeholder="Search libraries..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -158,33 +173,33 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
             </div>
           </div>
 
-          {/* API Cards */}
+          {/* Library Cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-            {filteredApis.length > 0 ? (
-              filteredApis.map((Api) => (
+            {filteredLibraries.length > 0 ? (
+              filteredLibraries.map((lib) => (
                 <div
-                  key={Api._id}
+                  key={lib._id}
                   className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-3"
                 >
-                  <div className="flex justify-between items-center border-b pb-4 border-blue-400">
-                    <h3 className="font-bold text-blue-400 text-2xl">{Api.name}</h3>
+                  <div className="flex justify-between items-center border-b-1 pb-4 border-blue-400">
+                    <h3 className="font-bold text-blue-400 text-2xl">{lib.name}</h3>
                     <FaTrash
-                      onClick={() => setApiToDelete(Api._id)}
+                      onClick={() => setLibraryToDelete(lib._id)}
                       className="text-red-600 cursor-pointer hover:scale-110 transition"
                       title="Delete"
                     />
                   </div>
-                  <p className="text-sm">{Api.description}</p>
+                  <p className="text-sm">{lib.description}</p>
                   <div className="leading-8">
-                    <strong>Language:</strong> {Api.language} <br />
-                    <strong>Category:</strong> {Api.category} <br />
-                    <strong>Security:</strong> {Api.security} <br />
-                    <strong>License:</strong> {Api.license}
+                    <strong>Language:</strong> {lib.language} <br />
+                    <strong>Category:</strong> {lib.category} <br />
+                    <strong>Security:</strong> {lib.security} <br />
+                    <strong>License:</strong> {lib.license}
                   </div>
-                  <div className="flex justify-center items-center mt-4 gap-4">
+                  <div className="flex justify-center items-center mt-4">
                     <button
                       className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 cursor-pointer active:scale-90 transition-all"
-                      onClick={() => setViewApiId(Api._id)}
+                      onClick={() => setViewLibId(lib._id)}
                     >
                       View Docs
                     </button>
@@ -193,20 +208,18 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
               ))
             ) : (
               <div className="col-span-full text-center py-10">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">No APIs available</p>
+                <p className="text-gray-500 dark:text-gray-400 text-lg">No libraries found</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Confirm Delete Popup */}
       <AnimatePresence>
-        {isAddModalOpen && <ApiAdd setShowModal={setIsAddModalOpen} onApiAdded={fetchApi} />}
-        {viewApiId && <ViewDoc setShowModal={() => setViewApiId(null)} id={viewApiId} />}
-        {apiToDelete && (
+        {libraryToDelete && (
           <ConfirmDeletePopup
-            onCancel={() => setApiToDelete(null)}
+            onCancel={() => setLibraryToDelete(null)}
             onConfirm={confirmDelete}
           />
         )}
@@ -215,4 +228,4 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   );
 };
 
-export default ManagementApi;
+export default LibraryManagement;

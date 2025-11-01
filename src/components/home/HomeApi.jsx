@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import Nav from "../home/Nav";
 import SideBar from "./SideBar";
-import { FaPlug, FaHeart, FaRegHeart, FaPlus, FaExternalLinkSquareAlt, FaCopy } from "react-icons/fa";
+import {
+  FaPlug,
+  FaHeart,
+  FaRegHeart,
+  FaPlus,
+  FaExternalLinkSquareAlt,
+  FaCopy,
+} from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
 import ViewDocApi from "./APi/ViewDocApi";
+import ViewUserApi from "./ViewUserApi";
 import axios from "axios";
 import SavedItemsPopup from "../popups/SavedItemsPopup";
 import { toast } from "react-toastify";
@@ -29,6 +37,7 @@ const HomeApi = () => {
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareTitle, setShareTitle] = useState("");
   const [sharing, setSharing] = useState(false);
+const [isUserApi, setIsUserApi] = useState(false);
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const dropdownRef = useRef(null);
@@ -45,16 +54,21 @@ const HomeApi = () => {
     file: null,
   });
 
-  // Fetch user info and favorites
+  // Fetch user info + favorites
   useEffect(() => {
     const fetchUserAndFavorites = async () => {
       try {
-        const userRes = await axios.get(`${BASE_URL}/user/user`, { withCredentials: true });
+        const userRes = await axios.get(`${BASE_URL}/user/user`, {
+          withCredentials: true,
+        });
         setUserId(userRes.data._id);
 
         const favRes = await axios.get(`${BASE_URL}/store/${userRes.data._id}`);
-        const apiFavorites = favRes.data?.apis?.map((item) => String(item._id)) || [];
-        setFavorites(apiFavorites);
+        const apiFavorites = [
+  ...(favRes.data?.apis?.map((item) => String(item._id)) || []),
+  ...(favRes.data?.userApis?.map((item) => String(item._id)) || [])
+];
+setFavorites(apiFavorites);
       } catch (err) {
         setFavorites([]);
         console.error("Error fetching user/favorites:", err.message);
@@ -62,13 +76,15 @@ const HomeApi = () => {
     };
     fetchUserAndFavorites();
   }, []);
-
+ 
   // Fetch public APIs
   useEffect(() => {
     const fetchApi = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${BASE_URL}/rApi/showApi`, { withCredentials: true });
+        const res = await axios.get(`${BASE_URL}/rApi/showApi`, {
+          withCredentials: true,
+        });
         setApi(res.data);
       } catch (err) {
         toast.error("Failed to fetch APIs");
@@ -80,32 +96,39 @@ const HomeApi = () => {
     fetchApi();
   }, []);
 
-  // Fetch user's APIs (private + public)
-  const fetchUserApis = async () => {
-    try {
-      if (!userId) return;
-      const publicRes = await axios.get(`${BASE_URL}/userapi/public`);
-      const myRes = await axios.get(`${BASE_URL}/userapi/myApis`, { withCredentials: true });
-      const myApis = myRes.data || [];
+const fetchUserApis = async () => {
+  try {
+    if (!userId) return;
+    const myRes = await axios.get(`${BASE_URL}/userapi/myApis`, {
+      withCredentials: true,
+    });
+    const myApis = (myRes.data || []).map((item) => ({
+      ...item,
+      isUserApi: true,
+    }));
+    setUserApis(myApis);
+  } catch (err) {
+    console.error("User API fetch error:", err.message);
+  }
+};
 
-      const combined = [
-        ...publicRes.data,
-        ...myApis.filter((item) => item.visibility === "private"),
-      ];
-      setUserApis(combined);
-    } catch (err) {
-      console.error("User API fetch error:", err.message);
-    }
-  };
+useEffect(() => {
+  fetchUserApis();
+}, [userId]);
+// dependency me userId rakho taki jab userId set ho fetch ho
 
-  useEffect(() => {
-    fetchUserApis();
-  }, [userId]);
+
+  // Fetch user APIs (private + public)
+
+
+ 
 
   // Fetch user groups
   const fetchMyGroups = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/groups/myGroups`, { withCredentials: true });
+      const res = await axios.get(`${BASE_URL}/groups/myGroups`, {
+        withCredentials: true,
+      });
       setGroups(res.data);
     } catch {
       toast.error("Failed to fetch your groups");
@@ -116,7 +139,7 @@ const HomeApi = () => {
     if (shareApi) fetchMyGroups();
   }, [shareApi]);
 
-  // Close dropdown if clicked outside
+  // Close dropdown when clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -127,13 +150,13 @@ const HomeApi = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Merge public + user APIs for rendering
-  const mergedApis = [...api, ...userApis];
+  // Merge APIs (User first, then Public)
+  const mergedApis = [...userApis, ...api];
 
-  // Categories list
-  const categories = ["Popular", "All", ...new Set(mergedApis.map((item) => item.category))];
+  // Categories
+  const categories = ["Popular", "All", ...new Set(mergedApis.map((i) => i.category))];
 
-  // Filter APIs by category
+  // Filter by category
   let filteredApis =
     selectedCategory === "Popular"
       ? mergedApis.filter((item) => item.popular)
@@ -154,24 +177,25 @@ const HomeApi = () => {
     cat.toLowerCase().includes(categorySearch.toLowerCase())
   );
 
-  // Toggle favorite
-  const toggleFavorite = async (apiId) => {
+  // Toggle Favorite
+  const toggleFavorite = async (apiItem) => {
     if (!userId) return;
-    const strId = String(apiId);
+    const apiId = String(apiItem._id);
+
     try {
-      if (favorites.includes(strId)) {
+      if (favorites.includes(apiId)) {
         await axios.delete(`${BASE_URL}/store/removeApi`, {
           data: { userId, apiId },
           withCredentials: true,
         });
-        setFavorites((prev) => prev.filter((id) => id !== strId));
+        setFavorites((prev) => prev.filter((id) => id !== apiId));
       } else {
         await axios.post(
           `${BASE_URL}/store/addApi`,
-          { userId, apiId },
+          { userId, apiId, isUserApi: apiItem.isUserApi || false },
           { withCredentials: true }
         );
-        setFavorites((prev) => [...prev, strId]);
+        setFavorites((prev) => [...prev, apiId]);
       }
     } catch (err) {
       toast.error("Failed to update favorites");
@@ -188,7 +212,8 @@ const HomeApi = () => {
 
   const shareToGroup = async (e) => {
     e && e.preventDefault();
-    if (!shareApi || !shareGroupId) return toast.error("Select group to share into");
+    if (!shareApi || !shareGroupId)
+      return toast.error("Select group to share into");
 
     setSharing(true);
     try {
@@ -214,7 +239,9 @@ const HomeApi = () => {
 
       const shareId = res.data.shareId;
       if (shareId) {
-        await navigator.clipboard.writeText(`${window.location.origin}/home?sharedId=${shareId}`);
+        await navigator.clipboard.writeText(
+          `${window.location.origin}/home?sharedId=${shareId}`
+        );
       }
 
       toast.success("Shared to group! Link copied to clipboard");
@@ -227,31 +254,53 @@ const HomeApi = () => {
   };
 
   // Create API
-  const handleCreateApi = async (e) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData();
-      Object.entries(apiForm).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
+ const handleCreateApi = async (e) => {
+  e.preventDefault();
+  try {
+    const formData = new FormData();
 
-      const res = await axios.post(`${BASE_URL}/userapi/create`, formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (res.status === 201 || res.status === 200) {
-        const apiUrl = res.data.api?.url;
-        setCreatedApiUrl(apiUrl || null);
-        alert("✅ API created successfully!");
-        setShowCreateModal(false);
-        fetchUserApis();
+    // Append all normal fields
+    ["name", "description", "category", "version", "parameters", "endpoints", "visibility"].forEach(
+      (key) => {
+        if (apiForm[key]) formData.append(key, apiForm[key]);
       }
-    } catch (err) {
-      alert("Error while creating API. Check console.");
-      console.error("API creation failed:", err);
+    );
+
+    // Append file if chosen
+    if (apiForm.inputType === "file" && apiForm.file) {
+      formData.append("file", apiForm.file);
     }
-  };
+
+    // Append manual JSON if chosen
+    if (apiForm.inputType === "manual" && apiForm.jsonData) {
+      try {
+        // Validate JSON
+        const parsed = JSON.parse(apiForm.jsonData);
+        formData.append("data", JSON.stringify(parsed));
+      } catch (err) {
+        alert("Invalid JSON! Please fix it before submitting.");
+        return;
+      }
+    }
+
+    const res = await axios.post(`${BASE_URL}/userapi/create`, formData, {
+      withCredentials: true,
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    if (res.status === 201 || res.status === 200) {
+      const apiUrl = res.data.api?.url;
+      setCreatedApiUrl(apiUrl || null);
+      alert("✅ API created successfully!");
+      setShowCreateModal(false);
+      fetchUserApis();
+    }
+  } catch (err) {
+    alert("Error while creating API. Check console.");
+    console.error("API creation failed:", err);
+  }
+};
+
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(createdApiUrl);
@@ -282,34 +331,7 @@ const HomeApi = () => {
               </button>
             </div>
 
-            {createdApiUrl && (
-              <div className="bg-green-100 dark:bg-green-800 p-4 rounded-xl flex justify-between items-center mb-6">
-                <div>
-                  <p className="font-semibold text-green-700 dark:text-green-200">
-                    🎉 Your API is live:
-                  </p>
-                  <p className="text-sm text-green-600 dark:text-green-300">{createdApiUrl}</p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={copyToClipboard}
-                    className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700"
-                  >
-                    <FaCopy /> Copy
-                  </button>
-                  <a
-                    href={createdApiUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    <FaExternalLinkSquareAlt /> Open
-                  </a>
-                </div>
-              </div>
-            )}
-
-            {/* Category + Search */}
+            {/* Search & Category */}
             <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center bg-gray-100 dark:bg-gray-900 py-2">
               <div className="w-full md:w-64 relative" ref={dropdownRef}>
                 <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
@@ -367,138 +389,235 @@ const HomeApi = () => {
 
             {/* API Cards */}
             <div className="grid justify-center md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
-              {filteredApis.length > 0 ? (
-                filteredApis.map((Api) => {
-                  const isFavorite = favorites.map(String).includes(String(Api._id));
-                  return (
-                    <div
-                      key={Api._id}
-                      className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
-                    >
-                      <div className="flex justify-between items-center border-b pb-3 border-blue-400">
-                        <h3 className="font-bold text-blue-500 text-2xl">{Api.name}</h3>
-                        <button onClick={() => toggleFavorite(Api._id)}>
-                          {isFavorite ? (
-                            <FaHeart className="text-red-500 text-xl" />
-                          ) : (
-                            <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />
-                          )}
-                        </button>
-                      </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{Api.description}</p>
-
-                      <div className="leading-8 text-gray-700 dark:text-gray-300">
-                        {Api.isUserApi ? (
-                          <>
-                            <strong>Visibility:</strong> {Api.visibility} <br />
-                            <strong>Data Items:</strong>{" "}
-                            {Array.isArray(Api.data) ? Api.data.length : 0} <br />
-                            <strong>Type:</strong> {Api.fileType?.toUpperCase()}
-                          </>
-                        ) : (
-                          <>
-                            <strong>Language:</strong> {Api.language} <br />
-                            <strong>Category:</strong> {Api.category} <br />
-                            <strong>Version:</strong> {Api.version} <br />
-                            <strong>License:</strong> {Api.license}
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex justify-center items-center mt-4 gap-4">
-                        <button
-                          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 transition-transform"
-                          onClick={() => setViewApiId(Api._id)}
-                        >
-                          View Docs
-                        </button>
-                        <button
-                          className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
-                          onClick={() => openShareModal(Api)}
-                        >
-                          Share
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
+  {filteredApis.length > 0 ? (
+    filteredApis.map((Api) => {
+      const isFavorite = favorites.map(String).includes(String(Api._id));
+      return (
+        <div
+          key={Api._id}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
+        >
+          <div className="flex justify-between items-center border-b pb-3 border-blue-400">
+            <h3 className="font-bold text-blue-500 text-2xl">
+              {Api.name}
+            </h3>
+            <button onClick={() => toggleFavorite(Api)}>
+              {isFavorite ? (
+                <FaHeart className="text-red-500 text-xl" />
               ) : (
-                <div className="col-span-full text-center py-10">
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">No APIs available</p>
-                </div>
+                <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />
               )}
+            </button>
+          </div>
+
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            {Api.description}
+          </p>
+
+          {Api.isUserApi ? (
+            <div className="text-gray-700 dark:text-gray-300">
+              <strong>Visibility:</strong> {Api.visibility}
             </div>
+          ) : (
+            <div className="leading-8 text-gray-700 dark:text-gray-300">
+              <strong>Language:</strong> {Api.language} <br />
+              <strong>Category:</strong> {Api.category} <br />
+              <strong>Version:</strong> {Api.version} <br />
+              <strong>License:</strong> {Api.license}
+            </div>
+          )}
+
+          <div className="flex justify-center items-center mt-4 gap-4">
+            {/* View Docs Button */}
+            {Api.isUserApi ? (
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 transition-transform"
+                onClick={() => {
+                  setViewApiId(Api._id);  // User API ka ID
+                  setIsUserApi(true);      // User API flag true
+                }}
+              >
+                View User API
+              </button>
+            ) : (
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 transition-transform"
+                onClick={() => {
+                  setViewApiId(Api._id);  // Public API ka ID
+                  setIsUserApi(false);     // User API flag false
+                }}
+              >
+                View Docs
+              </button>
+            )}
+
+            {/* Share Button */}
+            <button
+              className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
+              onClick={() => openShareModal(Api)}
+            >
+              Share
+            </button>
+          </div>
+        </div>
+      );
+    })
+  ) : (
+    <div className="col-span-full text-center py-10">
+      <p className="text-gray-500 dark:text-gray-400 text-lg">
+        No APIs available
+      </p>
+    </div>
+  )}
+</div>
+
           </div>
         </div>
       </div>
 
       {/* Modals */}
       <AnimatePresence>
-        {/* Create API Modal */}
         {showCreateModal && (
           <motion.div
-            className="fixed inset-0 flex justify-center items-center bg-black/50 z-50"
+            className=" fixed inset-0 flex justify-center items-center bg-black/50 z-50 "
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-[90%] md:w-[600px]"
+              className="  bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-[90%] md:w-[600px] max-h-[90vh] overflow-y-auto"
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
             >
-              <h2 className="text-2xl font-bold text-blue-500 mb-4">Create New API</h2>
-              <form onSubmit={handleCreateApi} className="space-y-3">
-                {["name", "description", "category", "version", "parameters", "endpoints"].map(
-                  (key) => (
-                    <div key={key}>
-                      <label className="font-semibold capitalize">{key}:</label>
-                      <input
-                        type="text"
-                        value={apiForm[key]}
-                        onChange={(e) => setApiForm({ ...apiForm, [key]: e.target.value })}
-                        className="w-full border p-2 rounded-md bg-gray-100 dark:bg-gray-700"
-                      />
-                    </div>
-                  )
-                )}
-                <div>
-                  <label>Upload File:</label>
-                  <input
-                    type="file"
-                    accept=".json,.csv,.xlsx,.xls"
-                    onChange={(e) => setApiForm({ ...apiForm, file: e.target.files[0] || null })}
-                    className="w-full border p-2 rounded-md bg-gray-100 dark:bg-gray-700"
-                  />
-                </div>
+              <h2 className="text-2xl font-bold text-blue-500 mb-4">
+                Create New API
+              </h2>
+         <form onSubmit={handleCreateApi} className="space-y-3">
+  {["name", "description", "category", "version", "parameters", "endpoints"].map(
+    (key) => (
+      <div key={key}>
+        <label className="font-semibold capitalize">{key}:</label>
+        <input
+          type="text"
+          value={apiForm[key]}
+          onChange={(e) =>
+            setApiForm({ ...apiForm, [key]: e.target.value })
+          }
+          className="w-full border p-2 rounded-md bg-gray-100 dark:bg-gray-700"
+        />
+      </div>
+    )
+  )}
 
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 rounded-md bg-gray-400 hover:bg-gray-500 text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Create
-                  </button>
-                </div>
-              </form>
+  {/* ✅ Visibility Dropdown */}
+  <div>
+    <label className="font-semibold">Visibility:</label>
+    <select
+      value={apiForm.visibility || "public"}
+      onChange={(e) => setApiForm({ ...apiForm, visibility: e.target.value })}
+      className="w-full border p-2 rounded-md bg-gray-100 dark:bg-gray-700"
+    >
+      <option value="public">Public</option>
+      <option value="private">Private</option>
+    </select>
+  </div>
+
+  {/* ✅ File Upload or Manual JSON Option */}
+  <div>
+    <label className="font-semibold">Add API Data:</label>
+    <div className="flex items-center gap-4 mt-2">
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="inputType"
+          value="file"
+          checked={apiForm.inputType === "file"}
+          onChange={() => setApiForm({ ...apiForm, inputType: "file" })}
+        />
+        Upload File
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="inputType"
+          value="manual"
+          checked={apiForm.inputType === "manual"}
+          onChange={() => setApiForm({ ...apiForm, inputType: "manual" })}
+        />
+        Enter JSON Manually
+      </label>
+    </div>
+
+    {/* ✅ If File Upload Selected */}
+    {apiForm.inputType === "file" && (
+      <div className="mt-2">
+        <input
+          type="file"
+          accept=".json,.csv,.xlsx,.xls"
+          onChange={(e) =>
+            setApiForm({ ...apiForm, file: e.target.files[0] || null })
+          }
+          className="w-full border p-2 rounded-md bg-gray-100 dark:bg-gray-700"
+        />
+      </div>
+    )}
+
+    {/* ✅ If Manual JSON Selected */}
+    {apiForm.inputType === "manual" && (
+      <div className="mt-2">
+        <textarea
+          rows="6"
+          placeholder='Enter JSON data here... Example: {"name": "APIverse", "version": "1.0"}'
+          value={apiForm.jsonData || ""}
+          onChange={(e) => setApiForm({ ...apiForm, jsonData: e.target.value })}
+          className="w-full border p-2 rounded-md bg-gray-100 dark:bg-gray-700 font-mono text-sm"
+        />
+      </div>
+    )}
+  </div>
+
+  <div className="flex justify-end gap-3 mt-4">
+    <button
+      type="button"
+      onClick={() => setShowCreateModal(false)}
+      className="px-4 py-2 rounded-md bg-gray-400 hover:bg-gray-500 text-white"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+    >
+      Create
+    </button>
+  </div>
+</form>
+
+
             </motion.div>
           </motion.div>
         )}
 
-        {/* View Docs Modal */}
-        {viewApiId && (
-          <ViewDocApi viewApiId={viewApiId} setViewApiId={setViewApiId} userId={userId} />
-        )}
+  {viewApiId && (
+  isUserApi ? (
+    <ViewUserApi
+      id={viewApiId}
+      setShowModal={setViewApiId}
+      onUpdate={() => fetchUserApis()} // <-- yaha callback
+    />
+  ) : (
+    <ViewDocApi
+      id={viewApiId}
+      setShowModal={setViewApiId}
+      userId={userId}
+    />
+  )
+)}
 
-        {/* Saved Items Modal */}
+
+
+
         {showSavedPopup && (
           <SavedItemsPopup
             setShowSavedPopup={setShowSavedPopup}
@@ -514,7 +633,9 @@ const HomeApi = () => {
               animate={{ scale: 1, opacity: 1 }}
               className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-[600px] shadow-lg"
             >
-              <h3 className="text-lg font-bold text-purple-600 mb-4">Share API to Group</h3>
+              <h3 className="text-lg font-bold text-purple-600 mb-4">
+                Share API to Group
+              </h3>
               <form onSubmit={shareToGroup} className="space-y-3">
                 <label className="block">
                   <div className="text-sm mb-1">Select Group</div>

@@ -30,7 +30,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const fetchLibById = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/lib/getLibById/${id}`);
+        const res = await axios.get(`${BASE_URL}/lib/getLibById/${id}`, {
+        withCredentials: true,
+      });
         setDocData(res.data);
         setForm(res.data);
       } catch (err) {
@@ -62,7 +64,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleSaveField = async (field) => {
     try {
-      await axios.put(`${BASE_URL}/lib/updateLib/${id}`, form);
+      await axios.put(`${BASE_URL}/lib/updateLib/${id}`, {
+        withCredentials: true,
+      }, form);
       setDocData(form);
       setEditingField(null);
     } catch (err) {

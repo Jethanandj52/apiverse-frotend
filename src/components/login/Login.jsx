@@ -19,37 +19,51 @@ const Login = () => {
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const login = async () => {
-    try {
-      const res = await axios.post(
-        `${BASE_URL}/auth/login`,
-        { email, password },
-        { withCredentials: true }
-      );
+ const login = async () => {
+  if (!email || !password) {
+    toast.error("Please enter email and password", { autoClose: 2000 });
+    return;
+  }
 
-      const emailFromRes = res.data.email || res.data.user?.email;
-      localStorage.setItem("firstName", res.data.firstName || res.data.user?.firstName);
-      localStorage.setItem("lastName", res.data.lastName || res.data.user?.lastName);
-      localStorage.setItem("email", emailFromRes);
-      localStorage.setItem("token", res.data.token || res.data.user?.token);
-      localStorage.setItem("userId", res.data.id || res.data.user?._id);
-      localStorage.setItem("isLoggedIn", "true");
+  try {
+    const res = await axios.post(
+      `${BASE_URL}/auth/login`,
+      { email, password },
+      { withCredentials: true }
+    );
 
-      setShowWelcome(true);
+    const userData = res.data.user || res.data;
 
-      setTimeout(() => {
-        if (emailFromRes === "admin@gmail.com") {
-          navigate("/Dashboard");
-        } else {
-          navigate("/Home");
-        }
-      }, 2000);
-    } catch (err) {
-      toast.error("Login Failed: " + (err.response?.data || err.message), {
-        autoClose: 2000,
-      });
+    if (!userData.token) {
+      throw new Error("Token not received from server");
     }
-  };
+
+    // Save data to localStorage
+    localStorage.setItem("firstName", userData.firstName || "");
+    localStorage.setItem("lastName", userData.lastName || "");
+    localStorage.setItem("email", userData.email || "");
+    localStorage.setItem("token", userData.token);
+    localStorage.setItem("userId", userData._id || userData.id || "");
+    localStorage.setItem("isLoggedIn", "true");
+
+    setShowWelcome(true);
+
+    setTimeout(() => {
+      if ((userData.email || "").toLowerCase() === "admin@gmail.com") {
+        navigate("/Dashboard");
+      } else {
+        navigate("/Home");
+      }
+    }, 2000);
+  } catch (err) {
+    console.error("Login error:", err.response?.data || err.message);
+    toast.error(
+      "Login Failed: " + (err.response?.data?.error || err.message),
+      { autoClose: 2000 }
+    );
+  }
+};
+
 
   const togglePasswordVisibility = () => {
     if (showPasswordType === "password") {

@@ -45,7 +45,9 @@ const Nav = ({ sideBar, setSidebar }) => {
     const fetchNotifications = async () => {
       if (!userId) return;
       try {
-        const res = await axios.get(`${BASE_URL}/notifications/${userId}`);
+        const res = await axios.get(`${BASE_URL}/notifications/${userId}`, {
+        withCredentials: true,
+      });
         setNotifications(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error("Error fetching notifications", err);
@@ -60,7 +62,9 @@ const Nav = ({ sideBar, setSidebar }) => {
     const fetchSavedCount = async () => {
       if (!userId) return;
       try {
-        const res = await axios.get(`${BASE_URL}/store/${userId}`);
+        const res = await axios.get(`${BASE_URL}/store/${userId}`, {
+        withCredentials: true,
+      });
         const total =
           (res.data.apis?.length || 0) + (res.data.libraries?.length || 0);
         setSavedCount(total);

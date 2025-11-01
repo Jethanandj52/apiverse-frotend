@@ -28,7 +28,9 @@ const ViewDoc = ({ setShowModal, id }) => {
     if (!id) return;
     const fetchApiById = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/rApi/getApiById/${id}`);
+        const res = await axios.get(`${BASE_URL}/rApi/getApiById/${id}`, {
+        withCredentials: true,
+      });
         setDocData(res.data);
         setForm(res.data);
       } catch (err) {

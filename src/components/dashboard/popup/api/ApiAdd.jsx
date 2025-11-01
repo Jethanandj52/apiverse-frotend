@@ -52,20 +52,20 @@ const ApiAdd = ({ setShowModal,onApiAdded }) => {
 
     // console.log("Submitted API Data:", apiData);
     try {
-      await axios.post(`${BASE_URL}/rApi/addApiDB`, apiData)
-      onApiAdded()
-      
-           toast.success("Api Added Successful!", { autoClose: 1000 });
-     
+      await axios.post(`${BASE_URL}/rApi/addApiDB`, {
+        withCredentials: true,
+      }, apiData);
+      onApiAdded();
+
+      toast.success("Api Added Successful!", { autoClose: 1000 });
+
       setShowModal(false); // close after save
       
     } catch (error) {
-      console.error("Error:",error);
-       toast.error("Error: " + (err.response?.data || err.message), {
-              autoClose: 2000,
-            });
-      
-      
+      console.error("Error:", error);
+      toast.error("Error: " + (error.response?.data || error.message), {
+        autoClose: 2000,
+      });
     }
     // Optionally send this to a backend
   };

@@ -12,7 +12,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     const getUser = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/user/user`, { withCredentials: true });
+        const res = await axios.get(`${BASE_URL}/user/user`, {
+        withCredentials: true,
+      });
         setUserData(res.data);
 
         // ✅ userId localStorage me save

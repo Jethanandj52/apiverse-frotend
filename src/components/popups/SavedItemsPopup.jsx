@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import ViewDocApi from "../home/APi/ViewDocApi";
 
 const SavedItemsPopup = ({ onClose, onUpdateCount }) => {
-  const [savedData, setSavedData] = useState({ apis: [], libraries: [] });
+  const [savedData, setSavedData] = useState({ apis: [], userApis: [], libraries: [] });
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -28,6 +28,7 @@ const SavedItemsPopup = ({ onClose, onUpdateCount }) => {
         setSavedData(res.data);
         setFavorites([
           ...res.data.apis.map((a) => a._id),
+          ...res.data.userApis.map((a) => a._id),
           ...res.data.libraries.map((l) => l._id),
         ]);
       } catch (err) {
@@ -39,15 +40,17 @@ const SavedItemsPopup = ({ onClose, onUpdateCount }) => {
     fetchSaved();
   }, [userId]);
 
-  // 🔄 update parent (Nav) count when savedData changes
   useEffect(() => {
     if (onUpdateCount) {
-      const total = savedData.apis.length + savedData.libraries.length;
+      const total =
+        savedData.apis.length +
+        savedData.userApis.length +
+        savedData.libraries.length;
       onUpdateCount(total);
     }
   }, [savedData]);
 
-  const toggleFavorite = async (id, type) => {
+  const toggleFavorite = async (id, type, isUserApi = false) => {
     try {
       if (favorites.includes(id)) {
         await axios.delete(
@@ -57,13 +60,14 @@ const SavedItemsPopup = ({ onClose, onUpdateCount }) => {
           {
             data:
               type === "api"
-                ? { userId, apiId: id }
+                ? { userId, apiId: id, isUserApi }
                 : { userId, libraryId: id },
           }
         );
         setFavorites(favorites.filter((f) => f !== id));
         setSavedData((prev) => ({
           apis: prev.apis.filter((a) => a._id !== id),
+          userApis: prev.userApis.filter((a) => a._id !== id),
           libraries: prev.libraries.filter((l) => l._id !== id),
         }));
       }
@@ -102,64 +106,79 @@ const SavedItemsPopup = ({ onClose, onUpdateCount }) => {
           </button>
         </div>
 
-        {/* APIs */}
-        <section className="mb-10">
-          <h3 className="text-lg sm:text-xl font-semibold mb-6 text-gray-800 dark:text-gray-200 text-center">
-            Saved APIs
-          </h3>
-          {savedData.apis.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 place-items-center">
-              {savedData.apis.map((api) => (
-                <div
-                  key={api._id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5 w-full hover:shadow-xl transition-all hover:scale-[1.02]"
-                >
-                  <div className="flex justify-between items-center border-b pb-3 border-blue-400">
-                    <h4 className="font-bold text-blue-500 text-base sm:text-lg truncate">
-                      {api.name}
-                    </h4>
-                    <button onClick={() => toggleFavorite(api._id, "api")}>
-                      {favorites.includes(api._id) ? (
-                        <FaHeart className="text-red-500 text-lg" />
-                      ) : (
-                        <FaRegHeart className="text-gray-400 text-lg hover:text-red-500" />
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-sm mt-2 text-gray-700 dark:text-gray-300 line-clamp-3">
-                    {api.description}
-                  </p>
-                  <div className="mt-3 text-xs sm:text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                    <p>
-                      <strong>Language:</strong> {api.language}
-                    </p>
-                    <p>
-                      <strong>Category:</strong> {api.category}
-                    </p>
-                    <p>
-                      <strong>Security:</strong> {api.security}
-                    </p>
-                    <p>
-                      <strong>License:</strong> {api.license}
-                    </p>
-                  </div>
-                  <div className="flex justify-center mt-4">
-                    <button
-                      onClick={() => setViewApiId(api._id)}
-                      className="bg-green-600 text-white text-sm sm:text-base px-4 py-2 rounded-md hover:bg-green-700 transition-transform active:scale-95"
-                    >
-                      View Docs
-                    </button>
-                  </div>
-                </div>
-              ))}
+        {/* APIs (Official + User APIs) */}
+       {/* APIs (Official + User APIs) */}
+<section className="mb-10">
+  <h3 className="text-lg sm:text-xl font-semibold mb-6 text-gray-800 dark:text-gray-200 text-center">
+    Saved APIs
+  </h3>
+
+  {[...savedData.apis, ...savedData.userApis].length > 0 ? (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 place-items-center">
+      {[...savedData.apis, ...savedData.userApis].map((api) => {
+        const isUserApi = savedData.userApis.some((a) => a._id === api._id);
+        const isFavorite = favorites.includes(api._id);
+
+        return (
+          <div
+            key={api._id}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer w-full"
+          >
+            <div className="flex justify-between items-center border-b pb-3 border-blue-400">
+              <h3 className="font-bold text-blue-500 text-2xl">
+                {api.name}
+              </h3>
+              <button
+                onClick={() =>
+                  toggleFavorite(api._id, "api", isUserApi)
+                }
+              >
+                {isFavorite ? (
+                  <FaHeart className="text-red-500 text-xl" />
+                ) : (
+                  <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />
+                )}
+              </button>
             </div>
-          ) : (
-            <p className="text-center text-gray-500 dark:text-gray-400">
-              No APIs saved.
+
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {api.description}
             </p>
-          )}
-        </section>
+
+            {isUserApi ? (
+              <div className="text-gray-700 dark:text-gray-300">
+                <strong>Visibility:</strong> {api.visibility}
+              </div>
+            ) : (
+              <div className="leading-8 text-gray-700 dark:text-gray-300">
+                <strong>Language:</strong> {api.language || "N/A"} <br />
+                <strong>Category:</strong> {api.category || "N/A"} <br />
+                <strong>Version:</strong> {api.version || "v1"} <br />
+                <strong>License:</strong> {api.license || "N/A"}
+              </div>
+            )}
+
+            <div className="flex justify-center items-center mt-4 gap-4">
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 transition-transform"
+                onClick={() => setViewApiId(api._id)}
+              >
+                View Docs
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  ) : (
+    <div className="text-center py-10">
+      <p className="text-gray-500 dark:text-gray-400 text-lg">
+        No saved APIs found
+      </p>
+    </div>
+  )}
+</section>
+
 
         {/* Libraries */}
         <section>

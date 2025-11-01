@@ -23,7 +23,9 @@ const LibraryManagement = () => {
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const fetchLibraries = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/lib/getlibraries`);
+      const res = await axios.get(`${BASE_URL}/lib/getlibraries`, {
+        withCredentials: true,
+      });
       setLibraries(res.data);
     } catch (err) {
       console.error("Failed to fetch libraries:", err);
@@ -33,7 +35,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const confirmDelete = async () => {
     if (!libraryToDelete) return;
     try {
-      await axios.delete(`${BASE_URL}/lib/deletelibrary/${libraryToDelete}`);
+      await axios.delete(`${BASE_URL}/lib/deletelibrary/${libraryToDelete}`, {
+        withCredentials: true,
+      });
       setLibraryToDelete(null);
       fetchLibraries();
     } catch (err) {

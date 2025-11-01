@@ -32,9 +32,15 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchApi = async () => {
     try {
-      const resUser = await axios.get(`${BASE_URL}/user/admin/users` );
-      const resApi = await axios.get(`${BASE_URL}/rApi/showApi`);
-      const resLib = await axios.get(`${BASE_URL}/lib/getLibraries`);
+      const resUser = await axios.get(`${BASE_URL}/user/admin/users` , {
+        withCredentials: true,
+      });
+      const resApi = await axios.get(`${BASE_URL}/rApi/showApi`, {
+        withCredentials: true,
+      });
+      const resLib = await axios.get(`${BASE_URL}/lib/getLibraries`, {
+        withCredentials: true,
+      });
 
       const users = resUser.data;
       const apis = resApi.data;

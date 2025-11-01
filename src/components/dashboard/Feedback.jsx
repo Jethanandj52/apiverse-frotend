@@ -16,8 +16,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Load feedbacks
   const fetchFeedbacks = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/feedback/showFeedback`);
-      setFeedbacks(res.data);
+      const res = await axios.get(`${BASE_URL}/feedback/showFeedback`, {
+        withCredentials: true,
+      });
     } catch (err) {
       console.error("Error fetching feedbacks:", err);
       toast.error("Failed to fetch feedbacks");
@@ -31,7 +32,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // ✅ Delete feedback
   const confirmDelete = async () => {
     try {
-      await axios.delete(`${BASE_URL}/feedback/deleteFeedback/${deleteId}`);
+      await axios.delete(`${BASE_URL}/feedback/deleteFeedback/${deleteId}`, {
+        withCredentials: true,
+      });
       setFeedbacks(feedbacks.filter((fb) => fb._id !== deleteId));
       toast.success("Feedback deleted successfully!", { autoClose: 1500 });
       setDeleteId(null); // ✅ Close modal
@@ -50,6 +53,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       setLoadingReply(true);
       await axios.post(`${BASE_URL}/feedback/replyFeedback/${replyId}`, {
         replyMessage: replyText,
+        withCredentials: true,
       });
 
       setFeedbacks(
