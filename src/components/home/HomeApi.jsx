@@ -238,6 +238,10 @@ const HomeApi = () => {
       console.error("❌ API creation failed:", error);
     }
   };
+ const copyToClipboard = () => {
+    navigator.clipboard.writeText(createdApiUrl);
+    alert("✅ API URL copied!");
+  };
 
 
   return (
