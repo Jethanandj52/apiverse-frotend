@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Nav from "../home/Nav";
 import SideBar from "./SideBar";
-import { FaPlug, FaHeart, FaRegHeart, FaPlus, FaExternalLinkAlt, FaExternalLinkSquareAlt } from "react-icons/fa";
+import { FaPlug, FaHeart, FaRegHeart, FaPlus, FaExternalLinkSquareAlt, FaCopy } from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
 import ViewDocApi from "./APi/ViewDocApi";
 import axios from "axios";
@@ -9,19 +9,20 @@ import SavedItemsPopup from "../popups/SavedItemsPopup";
 import { toast } from "react-toastify";
 
 const HomeApi = () => {
-  const [sideBar, setSidebar] = useState(false); // 🔹 mobile by default hidden
+  const [sideBar, setSidebar] = useState(false);
   const [viewApiId, setViewApiId] = useState(null);
   const [api, setApi] = useState([]);
+  const [userApis, setUserApis] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [userId, setUserId] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("Popular");
   const [searchQuery, setSearchQuery] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
-  const [favorites, setFavorites] = useState([]);
-  const [userId, setUserId] = useState(null);
   const [showSavedPopup, setShowSavedPopup] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-    const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createdApiUrl, setCreatedApiUrl] = useState(null); 
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createdApiUrl, setCreatedApiUrl] = useState(null);
 
   const [shareApi, setShareApi] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -32,7 +33,7 @@ const HomeApi = () => {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const dropdownRef = useRef(null);
 
-   const [apiForm, setApiForm] = useState({
+  const [apiForm, setApiForm] = useState({
     name: "",
     description: "",
     data: "",
@@ -44,6 +45,7 @@ const HomeApi = () => {
     file: null,
   });
 
+  // Fetch user info and favorites
   useEffect(() => {
     const fetchUserAndFavorites = async () => {
       try {
@@ -51,23 +53,26 @@ const HomeApi = () => {
         setUserId(userRes.data._id);
 
         const favRes = await axios.get(`${BASE_URL}/store/${userRes.data._id}`);
-        const apiFavorites = favRes.data?.apis?.map((item) => item._id) || [];
+        const apiFavorites = favRes.data?.apis?.map((item) => String(item._id)) || [];
         setFavorites(apiFavorites);
-      } catch {
+      } catch (err) {
         setFavorites([]);
+        console.error("Error fetching user/favorites:", err.message);
       }
     };
     fetchUserAndFavorites();
   }, []);
 
+  // Fetch public APIs
   useEffect(() => {
     const fetchApi = async () => {
       try {
         setLoading(true);
         const res = await axios.get(`${BASE_URL}/rApi/showApi`, { withCredentials: true });
         setApi(res.data);
-      } catch {
+      } catch (err) {
         toast.error("Failed to fetch APIs");
+        console.error("Fetch API error:", err.message);
       } finally {
         setLoading(false);
       }
@@ -75,21 +80,13 @@ const HomeApi = () => {
     fetchApi();
   }, []);
 
-  useEffect(() => {
-    if (shareApi) fetchMyGroups();
-  }, [shareApi]);
-
-    const fetchUserApis = async () => {
+  // Fetch user's APIs (private + public)
+  const fetchUserApis = async () => {
     try {
+      if (!userId) return;
       const publicRes = await axios.get(`${BASE_URL}/userapi/public`);
-      let myApis = [];
-
-      if (userId) {
-        const myRes = await axios.get(`${BASE_URL}/userapi/myApis`, {
-          withCredentials: true,
-        });
-        myApis = myRes.data || [];
-      }
+      const myRes = await axios.get(`${BASE_URL}/userapi/myApis`, { withCredentials: true });
+      const myApis = myRes.data || [];
 
       const combined = [
         ...publicRes.data,
@@ -101,10 +98,11 @@ const HomeApi = () => {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     fetchUserApis();
   }, [userId]);
 
+  // Fetch user groups
   const fetchMyGroups = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/groups/myGroups`, { withCredentials: true });
@@ -115,6 +113,11 @@ const HomeApi = () => {
   };
 
   useEffect(() => {
+    if (shareApi) fetchMyGroups();
+  }, [shareApi]);
+
+  // Close dropdown if clicked outside
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
@@ -124,15 +127,21 @@ const HomeApi = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const categories = ["Popular", "All", ...new Set(api.map((item) => item.category))];
+  // Merge public + user APIs for rendering
+  const mergedApis = [...api, ...userApis];
 
+  // Categories list
+  const categories = ["Popular", "All", ...new Set(mergedApis.map((item) => item.category))];
+
+  // Filter APIs by category
   let filteredApis =
     selectedCategory === "Popular"
-      ? api.filter((item) => item.popular)
+      ? mergedApis.filter((item) => item.popular)
       : selectedCategory === "All"
-      ? api
-      : api.filter((item) => item.category === selectedCategory);
+      ? mergedApis
+      : mergedApis.filter((item) => item.category === selectedCategory);
 
+  // Search filter
   if (searchQuery.trim() !== "") {
     filteredApis = filteredApis.filter(
       (item) =>
@@ -145,28 +154,32 @@ const HomeApi = () => {
     cat.toLowerCase().includes(categorySearch.toLowerCase())
   );
 
+  // Toggle favorite
   const toggleFavorite = async (apiId) => {
     if (!userId) return;
+    const strId = String(apiId);
     try {
-      if (favorites.includes(apiId)) {
+      if (favorites.includes(strId)) {
         await axios.delete(`${BASE_URL}/store/removeApi`, {
           data: { userId, apiId },
           withCredentials: true,
         });
-        setFavorites((prev) => prev.filter((id) => id !== apiId));
+        setFavorites((prev) => prev.filter((id) => id !== strId));
       } else {
         await axios.post(
           `${BASE_URL}/store/addApi`,
           { userId, apiId },
           { withCredentials: true }
         );
-        setFavorites((prev) => [...prev, apiId]);
+        setFavorites((prev) => [...prev, strId]);
       }
-    } catch {
+    } catch (err) {
       toast.error("Failed to update favorites");
+      console.error("Toggle favorite error:", err.message);
     }
   };
 
+  // Share modal
   const openShareModal = (apiItem) => {
     setShareApi(apiItem);
     setShareGroupId("");
@@ -213,7 +226,8 @@ const HomeApi = () => {
     }
   };
 
-    const handleCreateApi = async (e) => {
+  // Create API
+  const handleCreateApi = async (e) => {
     e.preventDefault();
     try {
       const formData = new FormData();
@@ -233,27 +247,23 @@ const HomeApi = () => {
         setShowCreateModal(false);
         fetchUserApis();
       }
-    } catch (error) {
+    } catch (err) {
       alert("Error while creating API. Check console.");
-      console.error("❌ API creation failed:", error);
+      console.error("API creation failed:", err);
     }
   };
- const copyToClipboard = () => {
+
+  const copyToClipboard = () => {
     navigator.clipboard.writeText(createdApiUrl);
     alert("✅ API URL copied!");
   };
 
-
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
-      {/* Sidebar */}
       <SideBar sideBar={sideBar} />
-
-      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Nav sideBar={sideBar} setSidebar={setSidebar} />
 
-        {/* ✅ Responsive wrapper like Library page */}
         <div
           className={`pt-[70px] transition-all duration-300 ease-in-out 
           ${sideBar ? "sm:pl-[220px]" : "sm:pl-[60px]"} 
@@ -261,43 +271,44 @@ const HomeApi = () => {
         >
           <div className="pt-4 px-4 md:px-8 pb-10">
             <div className="flex justify-between items-center mb-6">
-            <div className="flex text-2xl md:text-3xl font-bold text-blue-400 items-center gap-2">
-              <FaPlug /> API's Management
+              <div className="flex text-2xl md:text-3xl font-bold text-blue-400 items-center gap-2">
+                <FaPlug /> API's Management
+              </div>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all"
+              >
+                <FaPlus /> Create API
+              </button>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all"
-            >
-              <FaPlus /> Create API
-            </button>
-          </div>
 
-  {createdApiUrl && (
-            <div className="bg-green-100 dark:bg-green-800 p-4 rounded-xl flex justify-between items-center mb-6">
-              <div>
-                <p className="font-semibold text-green-700 dark:text-green-200">
-                  🎉 Your API is live:
-                </p>
-                <p className="text-sm text-green-600 dark:text-green-300">{createdApiUrl}</p>
+            {createdApiUrl && (
+              <div className="bg-green-100 dark:bg-green-800 p-4 rounded-xl flex justify-between items-center mb-6">
+                <div>
+                  <p className="font-semibold text-green-700 dark:text-green-200">
+                    🎉 Your API is live:
+                  </p>
+                  <p className="text-sm text-green-600 dark:text-green-300">{createdApiUrl}</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={copyToClipboard}
+                    className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  >
+                    <FaCopy /> Copy
+                  </button>
+                  <a
+                    href={createdApiUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    <FaExternalLinkSquareAlt /> Open
+                  </a>
+                </div>
               </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={copyToClipboard}
-                  className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700"
-                >
-                  <FaCopy /> Copy
-                </button>
-                <a
-                  href={createdApiUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  <FaExternalLinkSquareAlt /> Open
-                </a>
-              </div>
-            </div>
-          )}
+            )}
+
             {/* Category + Search */}
             <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center bg-gray-100 dark:bg-gray-900 py-2">
               <div className="w-full md:w-64 relative" ref={dropdownRef}>
@@ -355,72 +366,75 @@ const HomeApi = () => {
             </div>
 
             {/* API Cards */}
-           
+            <div className="grid justify-center md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
+              {filteredApis.length > 0 ? (
+                filteredApis.map((Api) => {
+                  const isFavorite = favorites.map(String).includes(String(Api._id));
+                  return (
+                    <div
+                      key={Api._id}
+                      className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
+                    >
+                      <div className="flex justify-between items-center border-b pb-3 border-blue-400">
+                        <h3 className="font-bold text-blue-500 text-2xl">{Api.name}</h3>
+                        <button onClick={() => toggleFavorite(Api._id)}>
+                          {isFavorite ? (
+                            <FaHeart className="text-red-500 text-xl" />
+                          ) : (
+                            <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{Api.description}</p>
 
-             <div className="grid justify-center md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
-              
-            {filteredApis.length > 0 ? (
-              filteredApis.map((Api) => (
-                <div
-                  key={Api._id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
-                >
-                  <div className="flex justify-between items-center border-b pb-3 border-blue-400">
-                    <h3 className="font-bold text-blue-500 text-2xl">{Api.name}</h3>
-                    <button onClick={() => toggleFavorite(Api._id)}>
-                      {favorites.includes(Api._id) ? (
-                        <FaHeart className="text-red-500 text-xl" />
-                      ) : (
-                        <FaRegHeart className="text-gray-400 text-xl hover:text-red-500" />
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{Api.description}</p>
+                      <div className="leading-8 text-gray-700 dark:text-gray-300">
+                        {Api.isUserApi ? (
+                          <>
+                            <strong>Visibility:</strong> {Api.visibility} <br />
+                            <strong>Data Items:</strong>{" "}
+                            {Array.isArray(Api.data) ? Api.data.length : 0} <br />
+                            <strong>Type:</strong> {Api.fileType?.toUpperCase()}
+                          </>
+                        ) : (
+                          <>
+                            <strong>Language:</strong> {Api.language} <br />
+                            <strong>Category:</strong> {Api.category} <br />
+                            <strong>Version:</strong> {Api.version} <br />
+                            <strong>License:</strong> {Api.license}
+                          </>
+                        )}
+                      </div>
 
-                  {Api.isUserApi ? (
-                    <div className="leading-8 text-gray-700 dark:text-gray-300">
-                      <strong>Visibility:</strong> {Api.visibility}
-                      <br />
-                      <strong>Data Items:</strong>{" "}
-                      {Array.isArray(Api.data) ? Api.data.length : 0}
-                      <br />
-                      <strong>Type:</strong> {Api.fileType?.toUpperCase()}
+                      <div className="flex justify-center items-center mt-4 gap-4">
+                        <button
+                          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 transition-transform"
+                          onClick={() => setViewApiId(Api._id)}
+                        >
+                          View Docs
+                        </button>
+                        <button
+                          className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
+                          onClick={() => openShareModal(Api)}
+                        >
+                          Share
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="leading-8 text-gray-700 dark:text-gray-300">
-                      <strong>Language:</strong> {Api.language} <br />
-                      <strong>Category:</strong> {Api.category} <br />
-                      <strong>Version:</strong> {Api.version} <br />
-                      <strong>License:</strong> {Api.license}
-                    </div>
-                  )}
-
-                  <div className="flex justify-center items-center mt-4 gap-4">
-                   <button
-  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 active:scale-95 transition-transform"
-  onClick={() => setViewApiId(Api._id)}
->
-  View Docs
-</button>
-
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">No APIs available</p>
                 </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">
-                  No APIs available
-                </p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Modals */}
       <AnimatePresence>
-
+        {/* Create API Modal */}
         {showCreateModal && (
           <motion.div
             className="fixed inset-0 flex justify-center items-center bg-black/50 z-50"
@@ -454,24 +468,22 @@ const HomeApi = () => {
                   <input
                     type="file"
                     accept=".json,.csv,.xlsx,.xls"
-                    onChange={(e) =>
-                      setApiForm({ ...apiForm, file: e.target.files[0] || null })
-                    }
+                    onChange={(e) => setApiForm({ ...apiForm, file: e.target.files[0] || null })}
                     className="w-full border p-2 rounded-md bg-gray-100 dark:bg-gray-700"
                   />
                 </div>
 
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-3 mt-4">
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="bg-gray-400 text-white px-3 py-1 rounded-md"
+                    className="px-4 py-2 rounded-md bg-gray-400 hover:bg-gray-500 text-white"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Create
                   </button>
@@ -480,14 +492,21 @@ const HomeApi = () => {
             </motion.div>
           </motion.div>
         )}
-        {viewApiId && <ViewDocApi setShowModal={() => setViewApiId(null)} id={viewApiId} />}
+
+        {/* View Docs Modal */}
+        {viewApiId && (
+          <ViewDocApi viewApiId={viewApiId} setViewApiId={setViewApiId} userId={userId} />
+        )}
+
+        {/* Saved Items Modal */}
         {showSavedPopup && (
           <SavedItemsPopup
-            onClose={() => setShowSavedPopup(false)}
+            setShowSavedPopup={setShowSavedPopup}
             favorites={favorites}
-            setFavorites={setFavorites}
           />
         )}
+
+        {/* Share API Modal */}
         {shareApi && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
             <motion.div
