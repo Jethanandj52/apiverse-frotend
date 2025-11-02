@@ -39,7 +39,7 @@ const Team = () => {
   ];
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
+    <div className="h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-black dark:text-white ">
       {/* ✅ Navbar */}
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
 
@@ -57,7 +57,7 @@ const Team = () => {
             👥 Meet Our Team
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 px-10">
             {team.map((member, index) => (
               <div
                 key={index}

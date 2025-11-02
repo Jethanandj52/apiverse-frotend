@@ -16,7 +16,7 @@ const About = () => {
   const [sideBar, setSidebar] = useState(true);
 
   return (
-    <div className="h-screen overflow-hidden">
+    <div className="h-screen overflow-hidden ">
       {/* ✅ Navbar */}
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
 
@@ -25,7 +25,7 @@ const About = () => {
 
       {/* ✅ Main Content */}
       <div
-        className={`pt-[70px] transition-all duration-300 ease-in-out ${
+        className={`pt-[70px] transition-all duration-300 ease-in-out  ${
           sideBar ? "pl-[220px]" : "pl-[60px]"
         } h-screen overflow-y-auto bg-gray-200 dark:bg-gray-900 text-black dark:text-white p-4`}
       >

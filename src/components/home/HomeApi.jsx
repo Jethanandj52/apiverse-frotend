@@ -17,6 +17,8 @@ import SavedItemsPopup from "../popups/SavedItemsPopup";
 import { toast } from "react-toastify";
 
 const HomeApi = () => {
+ const [publicUserApis, setPublicUserApis] = useState([]); // ✅ new
+
   const [sideBar, setSidebar] = useState(false);
   const [viewApiId, setViewApiId] = useState(null);
   const [api, setApi] = useState([]);
@@ -119,7 +121,23 @@ useEffect(() => {
 
 
   // Fetch user APIs (private + public)
-
+  useEffect(() => {
+    const fetchPublicUserApis = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/userapi/public`, {
+          withCredentials: true,
+        });
+        const formatted = (res.data || []).map((item) => ({
+          ...item,
+          isUserApi: true, // treat them as user APIs
+        }));
+        setPublicUserApis(formatted);
+      } catch (err) {
+        console.error("Public user APIs fetch error:", err.message);
+      }
+    };
+    fetchPublicUserApis();
+  }, []);
 
  
 
@@ -151,7 +169,13 @@ useEffect(() => {
   }, []);
 
   // Merge APIs (User first, then Public)
-  const mergedApis = [...userApis, ...api];
+    const mergedApis = [
+    ...userApis,
+    ...publicUserApis.filter(
+      (p) => !userApis.some((u) => u._id === p._id) // avoid duplicates
+    ),
+    ...api,
+  ];
 
   // Categories
   const categories = ["Popular", "All", ...new Set(mergedApis.map((i) => i.category))];

@@ -53,7 +53,7 @@ const BASE_URL = import.meta.env.BASE_URL;
   };
 
   return (
-    <div className="min-h-screen overflow-hidden">
+    <div className="min-h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 px-10">
       {/* ✅ Navbar */}
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
 
@@ -62,11 +62,11 @@ const BASE_URL = import.meta.env.BASE_URL;
 
       {/* ✅ Main Content */}
       <div
-          className={`pt-[70px] transition-all duration-300 ease-in-out 
+          className={`pt-[70px] transition-all duration-300 ease-in-out bg 
           ${sideBar ? "sm:pl-[220px]" : "sm:pl-[60px]"} 
-          pl-5 min-h-screen overflow-y-auto p-6`}
+           min-h-screen overflow-y-auto `}
         >
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto ">
           <h2 className="text-center text-3xl font-bold text-blue-500 mb-8 mt-6">
             Contact Us
           </h2>

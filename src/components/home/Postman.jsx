@@ -31,7 +31,8 @@ const Postman = () => {
 
   const TOKEN_KEY = "api_tester_jwt";
   const userId = localStorage.getItem("userId");
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL.replace("http://", "https://");
+
   // ✅ Redirect if user not logged in
   useEffect(() => {
     if (!userId) navigate("/");
@@ -122,22 +123,28 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     }
   };
 
-  // ✅ Send API Request
+  // ✅ Send API Request (HTTPS-safe)
   const sendRequest = async () => {
     if (!current || !current.url) return;
     updateRequest(activeTab, { loading: true, response: null });
     setAiSuggestion("");
     setLoadingAi(true);
 
+    // Force HTTPS if user typed HTTP manually
+   const apiUrl = current.url.startsWith("http")
+  ? current.url // full URL already hai
+  : `${BASE_URL}${current.url.startsWith("/") ? "" : "/"}${current.url}`;
+
     try {
       const res = await axios({
         method: current.method,
-        url: current.url,
+        url: apiUrl,
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         data: current.method !== "GET" ? tryParseJson(current.body) : undefined,
+        withCredentials: true,
         validateStatus: () => true,
       });
 
@@ -164,13 +171,13 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       // ✅ Save in backend (history)
       await saveRequestToHistory({
         method: current.method,
-        url: current.url,
+        url: apiUrl,
         headers: res.config.headers,
         body: tryParseJson(current.body),
         response: responseToShow,
       });
 
-      // ✅ Fixed AI Suggestion
+      // ✅ AI Suggestion
       try {
         const aiRes = await axios.post(
           `${BASE_URL}/ai/gemini`,
@@ -316,6 +323,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       toast.error("Failed to load shared request");
     }
   };
+
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-white p-10">
