@@ -49,7 +49,7 @@ const Login = () => {
     setShowWelcome(true);
 
     setTimeout(() => {
-      if ((userData.email || "").toLowerCase() === "admin@gmail.com") {
+      if ((userData.email || "").toLowerCase() === "jethanandj52@gmail.com") {
         navigate("/Dashboard");
       } else {
         navigate("/Home");

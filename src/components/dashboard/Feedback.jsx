@@ -3,22 +3,34 @@ import Nav from "../home/Nav";
 import SideBar from "./SideBar";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { toast } from "react-toastify"; // ✅ Toastify import
+import { toast } from "react-toastify";
 
 const Feedbacks = () => {
   const [sideBar, setSidebar] = useState(true);
   const [feedbacks, setFeedbacks] = useState([]);
   const [replyText, setReplyText] = useState("");
   const [replyId, setReplyId] = useState(null);
-  const [deleteId, setDeleteId] = useState(null); // ✅ Delete modal state
+  const [deleteId, setDeleteId] = useState(null);
   const [loadingReply, setLoadingReply] = useState(false);
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  // Load feedbacks
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // ✅ Fetch feedbacks
   const fetchFeedbacks = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/feedback/showFeedback`, {
         withCredentials: true,
       });
+      console.log("Fetched feedbacks:", res.data);
+
+      // handle both possible response formats
+      if (Array.isArray(res.data)) {
+        setFeedbacks(res.data);
+      } else if (Array.isArray(res.data.feedbacks)) {
+        setFeedbacks(res.data.feedbacks);
+      } else {
+        toast.error("Unexpected response format");
+      }
     } catch (err) {
       console.error("Error fetching feedbacks:", err);
       toast.error("Failed to fetch feedbacks");
@@ -35,14 +47,15 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       await axios.delete(`${BASE_URL}/feedback/deleteFeedback/${deleteId}`, {
         withCredentials: true,
       });
-      setFeedbacks(feedbacks.filter((fb) => fb._id !== deleteId));
+      setFeedbacks((prev) => prev.filter((fb) => fb._id !== deleteId));
       toast.success("Feedback deleted successfully!", { autoClose: 1500 });
-      setDeleteId(null); // ✅ Close modal
+      setDeleteId(null);
     } catch (err) {
       console.error("Error deleting feedback:", err);
       toast.error("Failed to delete feedback", { autoClose: 2000 });
     }
   };
+  const currentUserId = localStorage.getItem("userId")?.trim();
 
   // ✅ Reply to feedback
   const handleReply = async () => {
@@ -51,26 +64,26 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     try {
       setLoadingReply(true);
-      await axios.post(`${BASE_URL}/feedback/replyFeedback/${replyId}`, {
-        replyMessage: replyText,
-        withCredentials: true,
-      });
 
-      setFeedbacks(
-        feedbacks.map((fb) =>
+      await axios.post(
+        `${BASE_URL}/feedback/replyFeedback/${replyId}`,
+        { replyMessage: replyText },
+        { withCredentials: true }
+      );
+
+      // update feedback list
+      setFeedbacks((prev) =>
+        prev.map((fb) =>
           fb._id === replyId ? { ...fb, reply: replyText } : fb
         )
       );
 
       setReplyText("");
       setReplyId(null);
-
       toast.success("Reply sent successfully!", { autoClose: 1500 });
     } catch (err) {
       console.error("Error sending reply:", err);
-      toast.error("Failed to send reply: " + (err.response?.data || err.message), {
-        autoClose: 2000,
-      });
+      toast.error("Failed to send reply", { autoClose: 2000 });
     } finally {
       setLoadingReply(false);
     }
@@ -90,7 +103,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
           sideBar ? "pl-[300px]" : "pl-[60px]"
         } min-h-screen overflow-y-auto p-4`}
       >
-        <div className="max-w-7xl mx-auto pt-6 p-10 ">
+        <div className="max-w-7xl mx-auto pt-6 p-10">
           <h2 className="text-3xl font-bold text-blue-500 mb-6 text-center">
             User Feedbacks
           </h2>
@@ -134,7 +147,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                       Reply
                     </button>
                     <button
-                      onClick={() => setDeleteId(fb._id)} // ✅ Open delete modal
+                      onClick={() => setDeleteId(fb._id)}
                       className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
                     >
                       Delete
@@ -149,7 +162,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
       {/* ✅ Reply Modal */}
       {replyId && (
-        <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-[400px]">
             <h3 className="text-xl font-bold mb-4 text-blue-500">
               Reply to Feedback
@@ -182,7 +195,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
       {/* ✅ Delete Confirmation Modal */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-[350px] text-center">
             <h3 className="text-xl font-bold mb-4 text-red-500">Confirm Delete</h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">

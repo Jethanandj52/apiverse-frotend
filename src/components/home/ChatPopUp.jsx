@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { X, Menu } from "lucide-react";
+import { X, Menu, MessageSquare } from "lucide-react"; // 🆕 Added icon
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import ViewDocApi from "./APi/ViewDocApi";
@@ -17,6 +17,11 @@ const ChatPopUp = ({ userId, onClose }) => {
   const [viewApiId, setViewApiId] = useState(null);
   const [viewLibId, setViewLibId] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);
+
+  // 🆕 Feedback state
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [showFeedback, setShowFeedback] = useState(false);
+
   const chatEndRef = useRef(null);
   const lastSentByUserRef = useRef(false);
   const sidebarRef = useRef(null);
@@ -38,6 +43,27 @@ const ChatPopUp = ({ userId, onClose }) => {
     };
     fetchGroups();
   }, []);
+
+  // ✅ Feedback fetch
+  const fetchFeedbacks = async () => {
+    try {
+      const id = localStorage.getItem("userId");
+      if (!id) {
+        toast.error("User ID missing");
+        return;
+      }
+      const res = await axios.get(`${BASE_URL}/feedback/showFeedback`, {
+        withCredentials: true,
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const userFeedbacks = res.data.filter((f) => f.userId === id);
+      setFeedbacks(userFeedbacks);
+      setShowFeedback(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load feedback");
+    }
+  };
 
   // ✅ Fetch group data
   useEffect(() => {
@@ -145,7 +171,6 @@ const ChatPopUp = ({ userId, onClose }) => {
     ...messages.map((m) => ({ type: "msg", data: m })),
     ...sharedRequests.map((sr) => ({ type: "sr", data: sr })),
   ].sort((a, b) => new Date(a.data.createdAt) - new Date(b.data.createdAt));
-
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
       <motion.div
@@ -162,6 +187,53 @@ const ChatPopUp = ({ userId, onClose }) => {
           <X size={20} />
         </button>
 
+   <button
+          onClick={fetchFeedbacks}
+          className="absolute top-3 right-12 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md flex items-center gap-1 text-sm z-20"
+        >
+          <MessageSquare size={16} /> Feedback
+        </button>
+
+        <AnimatePresence>
+          {showFeedback && (
+            <motion.div
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              className="absolute top-16 right-4 bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-xl shadow-xl w-80 max-h-96 overflow-y-auto p-3 z-30"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-semibold text-blue-600">Your Feedback</h3>
+                <button
+                  onClick={() => setShowFeedback(false)}
+                  className="text-gray-500 hover:text-red-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              {feedbacks.length === 0 ? (
+                <p className="text-gray-500 text-sm">No feedback found</p>
+              ) : (
+                feedbacks.map((f, i) => (
+                  <div
+                    key={i}
+                    className="border-b border-gray-200 dark:border-gray-700 pb-2 mb-2"
+                  >
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                      {f.message}
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">
+                      Response: {f.response || "No response yet"}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      {new Date(f.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         {/* ===== Mobile Menu Button ===== */}
         <div className="absolute top-3 left-3 md:hidden z-20">
           <button

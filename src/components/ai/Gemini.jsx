@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { FiSend, FiPlus, FiCopy } from "react-icons/fi";
+import { FiSend, FiPlus, FiCopy, FiClock } from "react-icons/fi";
 import { ImSpinner2 } from "react-icons/im";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -16,6 +16,7 @@ const Gemini = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState("");
   const [sideBar, setSidebar] = useState(true);
+  const [historyModal, setHistoryModal] = useState(false); // Mobile/Tablet history modal
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [responseText, setResponseText] = useState("");
@@ -30,7 +31,6 @@ const Gemini = () => {
     if (!userId) navigate("/");
   }, [userId, navigate]);
 
-  // Fetch chats
   const fetchChats = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/ai/history/${userId}`);
@@ -47,6 +47,7 @@ const Gemini = () => {
       const res = await axios.get(`${BASE_URL}/ai/chat/${chatId}`);
       setActiveChat(res.data);
       setResponseText("");
+      setHistoryModal(false); // Close modal on selection
     } catch (err) {
       console.error("Error loading chat:", err);
     }
@@ -76,7 +77,7 @@ const Gemini = () => {
         if (index < response.length) {
           setResponseText((prev) => prev + response.charAt(index));
           index++;
-          setTimeout(typeText, 5);
+          setTimeout(typeText, 10);
         } else {
           setIsTyping(false);
           setLoading(false);
@@ -106,7 +107,7 @@ const Gemini = () => {
 
       if (lastIndex < start) {
         parts.push(
-          <div key={`text-${start}`} className="prose prose-slate dark:prose-invert max-w-none mb-4">
+          <div key={`text-${start}`} className="prose prose-slate dark:prose-invert max-w-none mb-4 break-words">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {text.slice(lastIndex, start)}
             </ReactMarkdown>
@@ -118,9 +119,9 @@ const Gemini = () => {
         <div key={`code-${start}`} className="relative mb-6 rounded-lg overflow-hidden shadow-lg border dark:border-gray-700">
           <button
             onClick={() => copyToClipboard(code.trim())}
-            className="absolute top-2 right-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded-lg"
+            className="absolute top-2 right-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded-lg flex items-center gap-1"
           >
-            <FiCopy className="inline mr-1" /> Copy
+            <FiCopy /> Copy
           </button>
           <SyntaxHighlighter language={lang || "javascript"} style={vscDarkPlus}>
             {code.trim()}
@@ -132,7 +133,7 @@ const Gemini = () => {
 
     if (lastIndex < text.length) {
       parts.push(
-        <div key="end" className="prose prose-slate dark:prose-invert max-w-none">
+        <div key="end" className="prose prose-slate dark:prose-invert max-w-none break-words">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {text.slice(lastIndex)}
           </ReactMarkdown>
@@ -154,14 +155,15 @@ const Gemini = () => {
   return (
     <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden">
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
+
       <div className="flex flex-1 overflow-hidden pt-[55px]">
         <SideBar sideBar={sideBar} />
 
-        {/* ✅ Responsive Wrapper */}
-        <div className={`flex flex-1 flex-col md:flex-row transition-all duration-300`}>
-          {/* Chat History Sidebar */}
-          <div className="hidden md:flex flex-col w-72 bg-white dark:bg-gray-800 border-r dark:border-gray-700 shadow-lg">
-            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-gradient-to-r from-blue-500 to-green-500 text-white">
+        {/* Main Chat Area */}
+        <div className="pl-15 flex flex-1 flex-col md:flex-row transition-all duration-300">
+          {/* Desktop Sidebar */}
+          <div className="hidden md:flex flex-col w-80 bg-white dark:bg-gray-800 border-r dark:border-gray-700 shadow-lg">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-gradient-to-r from-blue-600 to-green-500 text-white">
               <h2 className="text-lg font-semibold">Chat History</h2>
               <button
                 onClick={() => setActiveChat(null)}
@@ -170,22 +172,20 @@ const Gemini = () => {
                 <FiPlus />
               </button>
             </div>
-
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {chats.length > 0 ? (
                 chats.map((chat) => (
                   <div
                     key={chat._id}
-                    className={`group p-3 rounded-lg cursor-pointer relative ${
+                    className={`group p-3 rounded-lg cursor-pointer relative transition-all ${
                       activeChat?._id === chat._id
-                        ? "bg-blue-600 text-white"
+                        ? "bg-blue-600 text-white shadow-lg"
                         : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
                     }`}
                     onClick={() => loadChat(chat._id)}
                   >
                     <p className="font-medium truncate">{chat.title}</p>
-                    <p className="text-xs opacity-75">{new Date(chat.updatedAt).toLocaleString()}</p>
-
+                    <p className="text-xs opacity-70">{new Date(chat.updatedAt).toLocaleString()}</p>
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
@@ -207,14 +207,58 @@ const Gemini = () => {
             </div>
           </div>
 
-          {/* Chat Area */}
+          {/* Mobile/Tablet History Icon */}
+          <div className="md:hidden fixed bottom-24 right-4 z-50">
+            <button
+              onClick={() => setHistoryModal(true)}
+              className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all"
+            >
+              <FiClock size={24} />
+            </button>
+          </div>
+
+          {/* History Modal */}
+          {historyModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="bg-white dark:bg-gray-800 rounded-xl w-11/12 max-w-md p-4 shadow-lg relative">
+                <h2 className="text-lg font-semibold text-center mb-4 text-gray-800 dark:text-gray-100">
+                  Chat History
+                </h2>
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {chats.length > 0 ? (
+                    chats.map((chat) => (
+                      <div
+                        key={chat._id}
+                        className="p-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
+                        onClick={() => loadChat(chat._id)}
+                      >
+                        <p className="font-medium truncate">{chat.title}</p>
+                        <p className="text-xs opacity-70">{new Date(chat.updatedAt).toLocaleString()}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-500">No previous chats ✨</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setHistoryModal(false)}
+                  className="absolute top-2 right-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                >
+                  ✖️
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Chat Messages Area */}
           <div className="flex-1 flex flex-col h-full bg-gray-50 dark:bg-gray-900">
             <div
               ref={scrollRef}
-              className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-8 w-full max-w-5xl mx-auto"
+              className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 w-full max-w-5xl mx-auto"
             >
+              {/* Header */}
               <div className="text-center mb-6 sm:mb-8">
-                <h2 className="text-2xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-500">
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-500">
                   Gemini AI Assistant
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 mt-2 text-sm sm:text-base italic">
@@ -222,12 +266,14 @@ const Gemini = () => {
                 </p>
               </div>
 
+              {/* Error */}
               {error && (
                 <p className="text-red-500 mb-4 text-center font-medium bg-red-50 dark:bg-red-900/30 py-2 rounded-lg">
                   {error}
                 </p>
               )}
 
+              {/* Active Chat Messages */}
               {activeChat && activeChat.messages?.length > 0 ? (
                 activeChat.messages.map((msg, i) => (
                   <div
@@ -235,7 +281,7 @@ const Gemini = () => {
                     className={`flex mb-5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`p-3 sm:p-4 rounded-2xl shadow-md max-w-[90%] sm:max-w-[75%] leading-relaxed ${
+                      className={`p-4 sm:p-5 rounded-2xl shadow-md max-w-[90%] sm:max-w-[70%] break-words ${
                         msg.role === "user"
                           ? "bg-blue-500 text-white"
                           : "bg-white dark:bg-gray-800 dark:text-gray-100 border dark:border-gray-700"
@@ -253,28 +299,30 @@ const Gemini = () => {
                 </div>
               )}
 
+              {/* Typing Indicator */}
               {isTyping && (
                 <div className="mt-4 text-gray-500 flex items-center gap-2 justify-center text-sm sm:text-base">
                   <ImSpinner2 className="animate-spin" /> Gemini is thinking...
                 </div>
               )}
 
+              {/* AI Response */}
               {responseText && (
-                <div className="p-4 sm:p-5 bg-white dark:bg-gray-800 mt-6 rounded-xl border dark:border-gray-700 shadow-md">
+                <div className="p-4 sm:p-5 bg-white dark:bg-gray-800 mt-6 rounded-xl border dark:border-gray-700 shadow-md break-words">
                   {renderResponse(responseText)}
                 </div>
               )}
             </div>
 
             {/* Input Area */}
-            <div className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 px-3 sm:px-6 py-3 sm:py-4 sticky bottom-0">
+            <div className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 px-4 sm:px-6 py-3 sm:py-4 sticky bottom-0 z-20">
               <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 max-w-5xl mx-auto">
                 <textarea
                   rows={2}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 p-3 sm:p-4 border border-gray-300 dark:border-gray-600 rounded-xl resize-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white placeholder:italic focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
+                  className=" flex-1 p-3 sm:p-4 border border-gray-300 dark:border-gray-600 rounded-xl resize-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white placeholder:italic focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
                 />
                 <button
                   onClick={handleSend}

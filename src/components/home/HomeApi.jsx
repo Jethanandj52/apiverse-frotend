@@ -8,6 +8,7 @@ import {
   FaPlus,
   FaExternalLinkSquareAlt,
   FaCopy,
+  FaUser,
 } from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
 import ViewDocApi from "./APi/ViewDocApi";
@@ -32,6 +33,7 @@ const HomeApi = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUserApiModal, setShowUserApiModal] = useState(false);
   const [createdApiUrl, setCreatedApiUrl] = useState(null);
 
   const [shareApi, setShareApi] = useState(null);
@@ -347,12 +349,21 @@ useEffect(() => {
               <div className="flex text-2xl md:text-3xl font-bold text-blue-400 items-center gap-2">
                 <FaPlug /> API's Management
               </div>
-              <button
+<div className="flex gap-10">
+  <button
+                onClick={() => setShowUserApiModal(true)}
+                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all"
+              >
+                <FaUser /> User API
+              </button> 
+               <button
                 onClick={() => setShowCreateModal(true)}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-all"
               >
                 <FaPlus /> Create API
               </button>
+  </div>              
+            
             </div>
 
             {/* Search & Category */}
@@ -622,6 +633,100 @@ useEffect(() => {
             </motion.div>
           </motion.div>
         )}
+
+{showUserApiModal && (
+  <motion.div
+    className="fixed inset-0 flex justify-center items-center bg-black/50 z-50 p-4"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    onKeyDown={(e) => e.key === "Escape" && setShowUserApiModal(false)}
+    tabIndex={0} // taake keydown work kare
+  >
+    <motion.div
+      className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-[900px] max-h-[90vh] overflow-y-auto"
+      initial={{ scale: 0.8 }}
+      animate={{ scale: 1 }}
+      exit={{ scale: 0.8 }}
+    >
+      {/* Close Button */}
+      <button
+        onClick={() => setShowUserApiModal(false)}
+        className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-3xl font-extrabold text-center text-blue-600 mb-6">
+        Your APIs
+      </h2>
+
+      <div className="grid justify-center sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {userApis.length > 0 ? (
+          userApis.map((Api) => {
+            const isFavorite = favorites.map(String).includes(String(Api._id));
+            return (
+              <div
+                key={Api._id}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5 space-y-4 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-gray-200 dark:border-gray-700"
+              >
+                {/* Card Header */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-xl font-bold text-blue-500 line-clamp-1">
+                      {Api.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-300 mt-1 line-clamp-2">
+                      {Api.description}
+                    </p>
+                  </div>
+                  <button onClick={() => toggleFavorite(Api)}>
+                    {isFavorite ? (
+                      <FaHeart className="text-red-500 text-2xl" />
+                    ) : (
+                      <FaRegHeart className="text-gray-400 text-2xl hover:text-red-500 transition-colors" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Visibility */}
+                <div className="text-gray-700 dark:text-gray-300 font-medium">
+                  <span className="font-semibold">Visibility:</span> {Api.visibility}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-between gap-3 mt-3">
+                  <button
+                    className="flex-1 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 active:scale-95 transition-transform font-semibold"
+                    onClick={() => {
+                      setViewApiId(Api._id);
+                      setIsUserApi(true);
+                    }}
+                  >
+                    View API
+                  </button>
+                  <button
+                    className="flex-1 bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 font-semibold"
+                    onClick={() => openShareModal(Api)}
+                  >
+                    Share
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="col-span-full text-center py-16">
+            <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+              No User APIs available
+            </p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  </motion.div>
+)}
+
 
   {viewApiId && (
   isUserApi ? (

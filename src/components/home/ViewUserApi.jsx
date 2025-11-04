@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { FaTimes, FaCopy, FaTrash } from "react-icons/fa";
+import { FaTimes, FaCopy, FaTrash, FaEdit } from "react-icons/fa";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs, vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { toast, ToastContainer } from "react-toastify";
@@ -115,7 +115,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
               className="text-blue-500 hover:text-blue-700"
               onClick={() => setEditingField(field)}
             >
-              Edit
+              <FaEdit/>
             </button>
           )}
         </h3>
@@ -207,17 +207,8 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
             </div>
 
             {isOwner && (
-              <div className="flex gap-4 justify-end mt-4">
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-2"
-                >
-                  <FaTrash /> Delete
-                </button>
-              </div>
-            )}
-
-            <div className="flex justify-end mt-6">
+            <div className="flex gap-3">
+              <div className="flex justify-end mt-4 ">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-red-600 transition-all active:scale-90"
@@ -225,6 +216,20 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
                 Close
               </button>
             </div>
+             <div className="flex gap-4 justify-end mt-4">
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-2"
+                >
+                  <FaTrash /> Delete
+                </button>
+              </div>
+            </div>
+              
+             
+            )}
+
+            
           </div>
         </motion.div>
       </AnimatePresence>
