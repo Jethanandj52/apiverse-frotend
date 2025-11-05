@@ -31,7 +31,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
     if (!id) return;
     const fetchApi = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/userApi/${id}`);
+        const res = await axios.get(`${BASE_URL}/userApi/${id}`, { withCredentials: true });
         setApiData(res.data);
         setForm(res.data); // Initialize form with fetched data
       } catch (err) {
@@ -57,7 +57,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
     if (!window.confirm("Are you sure you want to delete this API?")) return;
 
     try {
-      await axios.delete(`${BASE_URL}/userApi/${id}`);
+      await axios.delete(`${BASE_URL}/userApi/${id}`, { withCredentials: true });
 
       toast.success("API deleted successfully!");
 
@@ -69,7 +69,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
           itemId: apiData._id,
           action: "delete",
           message: `${form.name} was deleted by ${currentUserId}`
-        });
+        },{ withCredentials: true }, );
       }
 
       if (onUpdate) onUpdate();
@@ -84,20 +84,31 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
   const handleSaveField = async (field) => {
     try {
       const updated = { ...form };
-      await axios.put(`${BASE_URL}/userApi/${id}`, updated, {
-        headers: { "Content-Type": "application/json" },
-      });
+     await axios.put(
+  `${BASE_URL}/userApi/${id}`,
+  updated,
+  {
+    headers: { "Content-Type": "application/json" },
+    withCredentials: true
+  }
+);
+
 
       // Notify owner if someone else updated
       if (!isOwner) {
-        await axios.post(`${BASE_URL}/notifications`, {
-          userId: apiData.user,
-          type: "UserApi",
-          itemId: apiData._id,
-          action: "update",
-          message: `${form.name} was updated by ${currentUserId}`
-        });
-      }
+  await axios.post(
+    `${BASE_URL}/notifications/add`,
+    {
+      userId: apiData.user,
+      type: "UserApi",
+      itemId: apiData._id,
+      action: "update",
+      message: `${form.name} was updated by ${currentUserId}`
+    },
+    { withCredentials: true } // config goes here
+  );
+}
+
 
       setApiData(prev => ({ ...prev, [field]: updated[field] }));
       setForm(prev => ({ ...prev, [field]: updated[field] }));
