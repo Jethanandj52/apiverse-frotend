@@ -14,16 +14,16 @@ const Feedbacks = () => {
   const [loadingReply, setLoadingReply] = useState(false);
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const token = localStorage.getItem("token"); // ✅ store JWT from login
 
   // ✅ Fetch feedbacks
   const fetchFeedbacks = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/feedback/showFeedback`, {
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
-      console.log("Fetched feedbacks:", res.data);
 
-      // handle both possible response formats
       if (Array.isArray(res.data)) {
         setFeedbacks(res.data);
       } else if (Array.isArray(res.data.feedbacks)) {
@@ -45,6 +45,7 @@ const Feedbacks = () => {
   const confirmDelete = async () => {
     try {
       await axios.delete(`${BASE_URL}/feedback/deleteFeedback/${deleteId}`, {
+        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
       setFeedbacks((prev) => prev.filter((fb) => fb._id !== deleteId));
@@ -55,7 +56,6 @@ const Feedbacks = () => {
       toast.error("Failed to delete feedback", { autoClose: 2000 });
     }
   };
-  const currentUserId = localStorage.getItem("userId")?.trim();
 
   // ✅ Reply to feedback
   const handleReply = async () => {
@@ -65,22 +65,29 @@ const Feedbacks = () => {
     try {
       setLoadingReply(true);
 
-      await axios.post(
+      // Send reply
+      const res = await axios.post(
         `${BASE_URL}/feedback/replyFeedback/${replyId}`,
         { replyMessage: replyText },
-        { withCredentials: true }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
       );
 
-      // update feedback list
-      setFeedbacks((prev) =>
-        prev.map((fb) =>
-          fb._id === replyId ? { ...fb, reply: replyText } : fb
-        )
-      );
+      if (res.data.success) {
+        setFeedbacks((prev) =>
+          prev.map((fb) =>
+            fb._id === replyId ? { ...fb, reply: replyText } : fb
+          )
+        );
+        toast.success("Reply sent successfully!", { autoClose: 1500 });
+      } else {
+        toast.error(res.data.error || "Failed to send reply");
+      }
 
       setReplyText("");
       setReplyId(null);
-      toast.success("Reply sent successfully!", { autoClose: 1500 });
     } catch (err) {
       console.error("Error sending reply:", err);
       toast.error("Failed to send reply", { autoClose: 2000 });
@@ -91,13 +98,9 @@ const Feedbacks = () => {
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white min-h-screen overflow-hidden">
-      {/* Navbar */}
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
-
-      {/* Sidebar */}
       <SideBar sideBar={sideBar} />
 
-      {/* Main Content */}
       <div
         className={`pt-[70px] transition-all duration-300 ease-in-out ${
           sideBar ? "pl-[300px]" : "pl-[60px]"
@@ -138,7 +141,6 @@ const Feedbacks = () => {
                     <strong>Admin Reply:</strong> {fb.reply || "No reply yet"}
                   </p>
 
-                  {/* Buttons */}
                   <div className="mt-4 flex gap-3">
                     <button
                       onClick={() => setReplyId(fb._id)}
@@ -160,7 +162,7 @@ const Feedbacks = () => {
         </div>
       </div>
 
-      {/* ✅ Reply Modal */}
+      {/* Reply Modal */}
       {replyId && (
         <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-[400px]">
@@ -193,11 +195,13 @@ const Feedbacks = () => {
         </div>
       )}
 
-      {/* ✅ Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-[350px] text-center">
-            <h3 className="text-xl font-bold mb-4 text-red-500">Confirm Delete</h3>
+            <h3 className="text-xl font-bold mb-4 text-red-500">
+              Confirm Delete
+            </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               Are you sure you want to delete this feedback?
             </p>

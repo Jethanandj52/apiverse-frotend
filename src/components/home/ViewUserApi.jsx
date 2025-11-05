@@ -53,48 +53,63 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
   };
 
   // Delete API
- const handleDelete = async () => {
-  if (!window.confirm("Are you sure you want to delete this API?")) return;
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this API?")) return;
 
-  try {
-    await axios.delete(`${BASE_URL}/userApi/${id}`);
-    toast.success("API deleted successfully!");
-    
-    // <-- Notify HomeApi to refresh cards
-    if (onUpdate) onUpdate();
+    try {
+      await axios.delete(`${BASE_URL}/userApi/${id}`);
 
-    setShowModal(false);
-  } catch (err) {
-    console.error("Delete API error:", err.response?.data || err.message);
-    toast.error(err.response?.data?.message || "Failed to delete API");
-  }
-};
+      toast.success("API deleted successfully!");
 
+      // Notify owner if current user is not owner
+      if (!isOwner) {
+        await axios.post(`${BASE_URL}/notifications`, {
+          userId: apiData.user,
+          type: "UserApi",
+          itemId: apiData._id,
+          action: "delete",
+          message: `${form.name} was deleted by ${currentUserId}`
+        });
+      }
+
+      if (onUpdate) onUpdate();
+      setShowModal(false);
+    } catch (err) {
+      console.error("Delete API error:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to delete API");
+    }
+  };
 
   // Save field update
- 
-
   const handleSaveField = async (field) => {
     try {
       const updated = { ...form };
       await axios.put(`${BASE_URL}/userApi/${id}`, updated, {
         headers: { "Content-Type": "application/json" },
       });
-      
-      // Local state update
+
+      // Notify owner if someone else updated
+      if (!isOwner) {
+        await axios.post(`${BASE_URL}/notifications`, {
+          userId: apiData.user,
+          type: "UserApi",
+          itemId: apiData._id,
+          action: "update",
+          message: `${form.name} was updated by ${currentUserId}`
+        });
+      }
+
       setApiData(prev => ({ ...prev, [field]: updated[field] }));
       setForm(prev => ({ ...prev, [field]: updated[field] }));
       setEditingField(null);
       toast.success("API updated successfully!");
 
-      // <-- Notify HomeApi to refresh cards
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Save error:", err.response?.data || err.message);
       toast.error(err.response?.data?.message || "Failed to update API");
     }
   };
-
 
   // Render editable field
   const renderEditableField = ({ label, field, type = "input" }) => {
@@ -104,7 +119,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
     const onChange = (e) => {
       const val = e.target.value;
       setForm(prev => ({ ...prev, [field]: val }));
-    };
+    }
 
     return (
       <div className="mb-4 relative group" key={field}>
@@ -209,14 +224,14 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
             {isOwner && (
             <div className="flex gap-3">
               <div className="flex justify-end mt-4 ">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-red-600 transition-all active:scale-90"
-              >
-                Close
-              </button>
-            </div>
-             <div className="flex gap-4 justify-end mt-4">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-red-600 transition-all active:scale-90"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="flex gap-4 justify-end mt-4">
                 <button
                   onClick={handleDelete}
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-2"
@@ -225,11 +240,8 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
                 </button>
               </div>
             </div>
-              
-             
             )}
 
-            
           </div>
         </motion.div>
       </AnimatePresence>

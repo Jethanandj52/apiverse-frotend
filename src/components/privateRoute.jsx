@@ -7,7 +7,7 @@ const PrivateRoute = ({ children, allowedForAdminOnly = false }) => {
   const location = useLocation();
 
   const isAuthenticated = !!token;
-  const isAdmin = userEmail === "admin@gmail.com";
+  const isAdmin = userEmail === "jethanandj52@gmail.com";
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;

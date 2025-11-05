@@ -19,51 +19,56 @@ const Login = () => {
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
- const login = async () => {
-  if (!email || !password) {
-    toast.error("Please enter email and password", { autoClose: 2000 });
-    return;
-  }
-
-  try {
-    const res = await axios.post(
-      `${BASE_URL}/auth/login`,
-      { email, password },
-      { withCredentials: true }
-    );
-
-    const userData = res.data.user || res.data;
-
-    if (!userData.token) {
-      throw new Error("Token not received from server");
+  const login = async () => {
+    if (!email || !password) {
+      toast.error("Please enter email and password", { autoClose: 2000 });
+      return;
     }
 
-    // Save data to localStorage
-    localStorage.setItem("firstName", userData.firstName || "");
-    localStorage.setItem("lastName", userData.lastName || "");
-    localStorage.setItem("email", userData.email || "");
-    localStorage.setItem("token", userData.token);
-    localStorage.setItem("userId", userData._id || userData.id || "");
-    localStorage.setItem("isLoggedIn", "true");
+    try {
+      const res = await axios.post(
+        `${BASE_URL}/auth/login`,
+        { email, password },
+        { withCredentials: true }
+      );
 
-    setShowWelcome(true);
+      const userData = res.data.user || res.data;
 
-    setTimeout(() => {
-      if ((userData.email || "").toLowerCase() === "jethanandj52@gmail.com") {
-        navigate("/Dashboard");
-      } else {
-        navigate("/Home");
+      if (!userData.token) {
+        throw new Error("Token not received from server");
       }
-    }, 2000);
-  } catch (err) {
-    console.error("Login error:", err.response?.data || err.message);
-    toast.error(
-      "Login Failed: " + (err.response?.data?.error || err.message),
-      { autoClose: 2000 }
-    );
-  }
-};
 
+      // Save data to localStorage
+      localStorage.setItem("firstName", userData.firstName || "");
+      localStorage.setItem("lastName", userData.lastName || "");
+      localStorage.setItem("email", userData.email || "");
+      localStorage.setItem("token", userData.token);
+      localStorage.setItem("userId", userData._id || userData.id || "");
+      localStorage.setItem("isLoggedIn", "true");
+
+      setShowWelcome(true);
+
+      // ✅ Email check and navigation logic
+      setTimeout(() => {
+        const emailCheck = (userData.email || "").trim().toLowerCase();
+        console.log("Logged in email:", emailCheck);
+
+        if (emailCheck === "jethanandj52@gmail.com") {
+          console.log("✅ Admin detected — Navigating to Dashboard");
+          navigate("/Dashboard");
+        } else {
+          console.log("➡️ Regular user — Navigating to Home");
+          navigate("/Home");
+        }
+      }, 2000);
+    } catch (err) {
+      console.error("Login error:", err.response?.data || err.message);
+      toast.error(
+        "Login Failed: " + (err.response?.data?.error || err.message),
+        { autoClose: 2000 }
+      );
+    }
+  };
 
   const togglePasswordVisibility = () => {
     if (showPasswordType === "password") {
@@ -75,7 +80,7 @@ const Login = () => {
     }
   };
 
-  // Welcome animation
+  // ✅ Welcome animation (loading screen)
   if (showWelcome) {
     return (
       <motion.div
@@ -130,7 +135,7 @@ const Login = () => {
           Sign In to APIverse
         </h2>
 
-        {/* Email */}
+        {/* Email Input */}
         <div className="mb-4">
           <input
             type="email"
@@ -141,7 +146,7 @@ const Login = () => {
           />
         </div>
 
-        {/* Password */}
+        {/* Password Input */}
         <div className="mb-4 relative">
           <input
             type={showPasswordType}

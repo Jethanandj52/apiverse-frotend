@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { X, Menu, MessageSquare } from "lucide-react"; // 🆕 Added icon
+import { X, Menu, MessageSquare } from "lucide-react"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import ViewDocApi from "./APi/ViewDocApi";
 import ViewDocLibHome from "./Library/ViewDocLibHome";
+ 
 
 const ChatPopUp = ({ userId, onClose }) => {
   const [groups, setGroups] = useState([]);
@@ -17,10 +18,11 @@ const ChatPopUp = ({ userId, onClose }) => {
   const [viewApiId, setViewApiId] = useState(null);
   const [viewLibId, setViewLibId] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);
-
-  // 🆕 Feedback state
+  
   const [feedbacks, setFeedbacks] = useState([]);
   const [showFeedback, setShowFeedback] = useState(false);
+
+  const [unreadCounts, setUnreadCounts] = useState({}); // 🆕 Track unread messages per group
 
   const chatEndRef = useRef(null);
   const lastSentByUserRef = useRef(false);
@@ -44,27 +46,6 @@ const ChatPopUp = ({ userId, onClose }) => {
     fetchGroups();
   }, []);
 
-  // ✅ Feedback fetch
-  const fetchFeedbacks = async () => {
-    try {
-      const id = localStorage.getItem("userId");
-      if (!id) {
-        toast.error("User ID missing");
-        return;
-      }
-      const res = await axios.get(`${BASE_URL}/feedback/showFeedback`, {
-        withCredentials: true,
-        headers: { "Cache-Control": "no-cache" },
-      });
-      const userFeedbacks = res.data.filter((f) => f.userId === id);
-      setFeedbacks(userFeedbacks);
-      setShowFeedback(true);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load feedback");
-    }
-  };
-
   // ✅ Fetch group data
   useEffect(() => {
     if (!selectedGroup?._id || !isValidObjectId(selectedGroup._id)) return;
@@ -83,6 +64,23 @@ const ChatPopUp = ({ userId, onClose }) => {
           }),
         ]);
 
+        // 🆕 Update unread counts for other groups
+        if (messages.length > 0) {
+          setUnreadCounts((prev) => {
+            const newCounts = { ...prev };
+            groups.forEach((g) => {
+              if (g._id !== selectedGroup._id) {
+                const prevCount = prev[g._id] || 0;
+                // Count messages that are new for this group
+                newCounts[g._id] = prevCount + msgRes.data.filter(
+                  (m) => !messages.find((old) => old._id === m._id)
+                ).length;
+              }
+            });
+            return newCounts;
+          });
+        }
+
         setMembers(memberRes.data);
         setMessages(msgRes.data);
 
@@ -98,6 +96,7 @@ const ChatPopUp = ({ userId, onClose }) => {
                   sr.request.category === "API"
                     ? `${BASE_URL}/rApi/getApiById/${sr.request.apiId}`
                     : `${BASE_URL}/lib/getLibById/${sr.request.apiId}`;
+                    
                 const apiRes = await axios.get(url, { withCredentials: true });
                 return { ...sr, apiData: apiRes.data };
               } catch {
@@ -110,6 +109,9 @@ const ChatPopUp = ({ userId, onClose }) => {
 
         setSharedRequests(enrichedSR);
         lastSentByUserRef.current = false;
+
+        // 🆕 Reset unread count for current group
+        setUnreadCounts((prev) => ({ ...prev, [selectedGroup._id]: 0 }));
       } catch (err) {
         console.error(err);
         toast.error("Failed to load chat data");
@@ -171,6 +173,7 @@ const ChatPopUp = ({ userId, onClose }) => {
     ...messages.map((m) => ({ type: "msg", data: m })),
     ...sharedRequests.map((sr) => ({ type: "sr", data: sr })),
   ].sort((a, b) => new Date(a.data.createdAt) - new Date(b.data.createdAt));
+
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
       <motion.div
@@ -187,53 +190,6 @@ const ChatPopUp = ({ userId, onClose }) => {
           <X size={20} />
         </button>
 
-   <button
-          onClick={fetchFeedbacks}
-          className="absolute top-3 right-12 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-md flex items-center gap-1 text-sm z-20"
-        >
-          <MessageSquare size={16} /> Feedback
-        </button>
-
-        <AnimatePresence>
-          {showFeedback && (
-            <motion.div
-              initial={{ opacity: 0, y: -30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              className="absolute top-16 right-4 bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-xl shadow-xl w-80 max-h-96 overflow-y-auto p-3 z-30"
-            >
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-blue-600">Your Feedback</h3>
-                <button
-                  onClick={() => setShowFeedback(false)}
-                  className="text-gray-500 hover:text-red-500"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              {feedbacks.length === 0 ? (
-                <p className="text-gray-500 text-sm">No feedback found</p>
-              ) : (
-                feedbacks.map((f, i) => (
-                  <div
-                    key={i}
-                    className="border-b border-gray-200 dark:border-gray-700 pb-2 mb-2"
-                  >
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                      {f.message}
-                    </p>
-                    <p className="text-xs text-green-600 mt-1">
-                      Response: {f.response || "No response yet"}
-                    </p>
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      {new Date(f.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                ))
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
         {/* ===== Mobile Menu Button ===== */}
         <div className="absolute top-3 left-3 md:hidden z-20">
           <button
@@ -269,7 +225,7 @@ const ChatPopUp = ({ userId, onClose }) => {
                         setSelectedGroup(g);
                         setShowSidebar(false);
                       }}
-                      className={`p-3 rounded-lg cursor-pointer transition ${
+                      className={`p-3 rounded-lg cursor-pointer transition relative ${
                         selectedGroup?._id === g._id
                           ? "bg-blue-500 text-white"
                           : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -277,6 +233,12 @@ const ChatPopUp = ({ userId, onClose }) => {
                     >
                       <p className="font-semibold">{g.name}</p>
                       <p className="text-xs opacity-80">{g.description}</p>
+                      {/* 🆕 Unread count badge */}
+                      {unreadCounts[g._id] > 0 && (
+                        <span className="absolute top-2 right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {unreadCounts[g._id]}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -336,6 +298,7 @@ const ChatPopUp = ({ userId, onClose }) => {
                       );
                     }
 
+                    // ===== Shared Requests: API =====
                     if (item.type === "sr" && item.data.request.category === "API") {
                       const api = item.data.apiData;
                       const time = new Date(item.data.createdAt).toLocaleTimeString([], {
@@ -354,9 +317,14 @@ const ChatPopUp = ({ userId, onClose }) => {
                           className="bg-gray-200 dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 space-y-3"
                         >
                           <div className="flex justify-between border-b pb-2 border-blue-400">
-                            <h3 className="font-bold text-blue-500 text-lg sm:text-2xl">
-                              {api.name}
-                            </h3>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Shared by: {item.data.sender?.firstName || "Unknown"}
+                              </p>
+                              <h3 className="font-bold text-blue-500 text-lg sm:text-2xl">
+                                {api.name}
+                              </h3>
+                            </div>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {time}
                             </span>
@@ -382,6 +350,7 @@ const ChatPopUp = ({ userId, onClose }) => {
                       );
                     }
 
+                    // ===== Shared Requests: Library =====
                     if (item.type === "sr" && item.data.request.category === "Library") {
                       const lib = item.data.apiData;
                       const time = new Date(item.data.createdAt).toLocaleTimeString([], {
@@ -400,9 +369,14 @@ const ChatPopUp = ({ userId, onClose }) => {
                           className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 sm:p-6 space-y-3 hover:scale-[1.02] transition-all"
                         >
                           <div className="flex justify-between border-b pb-2 border-blue-400">
-                            <h3 className="font-bold text-blue-500 text-lg sm:text-2xl">
-                              {lib.name}
-                            </h3>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Shared by: {item.data.sender?.firstName || "Unknown"}
+                              </p>
+                              <h3 className="font-bold text-blue-500 text-lg sm:text-2xl">
+                                {lib.name}
+                              </h3>
+                            </div>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {time}
                             </span>
@@ -411,8 +385,7 @@ const ChatPopUp = ({ userId, onClose }) => {
                             {lib.description || "No description available"}
                           </p>
                           <div className="text-sm text-gray-700 dark:text-gray-300 leading-6">
-                            <strong>Language:</strong>{" "}
-                            {lib.language?.join(", ") || "-"} <br />
+                            <strong>Language:</strong> {lib.language?.join(", ") || "-"} <br />
                             <strong>Category:</strong> {lib.category || "-"} <br />
                             <strong>Version:</strong> {lib.version || "-"} <br />
                             <strong>License:</strong> {lib.license || "-"}
@@ -429,6 +402,7 @@ const ChatPopUp = ({ userId, onClose }) => {
                       );
                     }
 
+                    // ===== Other Shared Requests =====
                     if (
                       item.type === "sr" &&
                       item.data.request.category !== "API" &&
