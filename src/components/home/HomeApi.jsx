@@ -129,7 +129,7 @@ useEffect(() => {
         const res = await axios.get(`${BASE_URL}/userapi/public`, {
           withCredentials: true,
         });
-        const formatted = (res.data || []).map((item) => ({
+        const formatted = (res.data.data || []).map((item) => ({
           ...item,
           isUserApi: true, // treat them as user APIs
         }));
