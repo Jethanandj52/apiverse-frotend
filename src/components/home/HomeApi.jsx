@@ -771,7 +771,7 @@ useEffect(() => {
                   <select
                     value={shareGroupId}
                     onChange={(e) => setShareGroupId(e.target.value)}
-                    className="w-full p-3 rounded border"
+                    className="w-full p-3 rounded border bg-gray-100 dark:bg-gray-700"
                   >
                     <option value="">-- choose group --</option>
                     {groups.map((g) => (

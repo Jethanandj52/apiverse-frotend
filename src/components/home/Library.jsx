@@ -177,10 +177,10 @@ const Library = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 text-black dark:text-white relative">
-      {/* ✅ Sidebar */}
+      {/* Sidebar */}
       <SideBar sideBar={sideBar} setSidebar={setSidebar} />
 
-      {/* ✅ Overlay (mobile only) */}
+      {/* Overlay (mobile only) */}
       {sideBar && (
         <div
           className="fixed inset-0 bg-black/40 sm:hidden z-30"
@@ -188,7 +188,7 @@ const Library = () => {
         ></div>
       )}
 
-      {/* ✅ Main Content */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Nav sideBar={sideBar} setSidebar={setSidebar} />
 
@@ -333,6 +333,7 @@ const Library = () => {
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white dark:bg-gray-800 rounded-lg p-6 w-[600px] shadow-lg"
             >
               <h3 className="text-lg font-bold text-purple-600 mb-4">

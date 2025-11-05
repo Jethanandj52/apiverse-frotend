@@ -11,7 +11,8 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
   const [apiData, setApiData] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [form, setForm] = useState({});
-  const [copied, setCopied] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [copiedExample, setCopiedExample] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -45,11 +46,17 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
   const isOwner = currentUserId && apiData?.user && String(apiData.user) === currentUserId;
 
   // Copy to clipboard
-  const handleCopy = (text) => {
+  const handleCopy = (text, type) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
+
+    if (type === "url") {
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 3000);
+    } else if (type === "example") {
+      setCopiedExample(true);
+      setTimeout(() => setCopiedExample(false), 3000);
+    }
   };
 
   // Delete API
@@ -58,10 +65,8 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
 
     try {
       await axios.delete(`${BASE_URL}/userApi/${id}`, { withCredentials: true });
-
       toast.success("API deleted successfully!");
 
-      // Notify owner if current user is not owner
       if (!isOwner) {
         await axios.post(`${BASE_URL}/notifications`, {
           userId: apiData.user,
@@ -69,7 +74,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
           itemId: apiData._id,
           action: "delete",
           message: `${form.name} was deleted by ${currentUserId}`
-        },{ withCredentials: true }, );
+        }, { withCredentials: true });
       }
 
       if (onUpdate) onUpdate();
@@ -84,37 +89,30 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
   const handleSaveField = async (field) => {
     try {
       const updated = { ...form };
-     await axios.put(
-  `${BASE_URL}/userApi/${id}`,
-  updated,
-  {
-    headers: { "Content-Type": "application/json" },
-    withCredentials: true
-  }
-);
+      await axios.put(
+        `${BASE_URL}/userApi/${id}`,
+        updated,
+        { headers: { "Content-Type": "application/json" }, withCredentials: true }
+      );
 
-
-      // Notify owner if someone else updated
       if (!isOwner) {
-  await axios.post(
-    `${BASE_URL}/notifications/add`,
-    {
-      userId: apiData.user,
-      type: "UserApi",
-      itemId: apiData._id,
-      action: "update",
-      message: `${form.name} was updated by ${currentUserId}`
-    },
-    { withCredentials: true } // config goes here
-  );
-}
-
+        await axios.post(
+          `${BASE_URL}/notifications/add`,
+          {
+            userId: apiData.user,
+            type: "UserApi",
+            itemId: apiData._id,
+            action: "update",
+            message: `${form.name} was updated by ${currentUserId}`
+          },
+          { withCredentials: true }
+        );
+      }
 
       setApiData(prev => ({ ...prev, [field]: updated[field] }));
       setForm(prev => ({ ...prev, [field]: updated[field] }));
       setEditingField(null);
       toast.success("API updated successfully!");
-
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Save error:", err.response?.data || err.message);
@@ -127,21 +125,15 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
     const value = form?.[field];
     const displayValue = apiData?.[field] || "N/A";
 
-    const onChange = (e) => {
-      const val = e.target.value;
-      setForm(prev => ({ ...prev, [field]: val }));
-    }
+    const onChange = (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
 
     return (
       <div className="mb-4 relative group" key={field}>
         <h3 className="text-lg font-bold text-blue-500 pb-2 flex items-center justify-between">
           {label}
           {isOwner && editingField !== field && (
-            <button
-              className="text-blue-500 hover:text-blue-700"
-              onClick={() => setEditingField(field)}
-            >
-              <FaEdit/>
+            <button className="text-blue-500 hover:text-blue-700" onClick={() => setEditingField(field)}>
+              <FaEdit />
             </button>
           )}
         </h3>
@@ -177,9 +169,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
             </div>
           </>
         ) : (
-          <p className="bg-gray-100 dark:bg-gray-700 p-3 rounded whitespace-pre-wrap">
-            {displayValue}
-          </p>
+          <p className="bg-gray-100 dark:bg-gray-700 p-3 rounded whitespace-pre-wrap">{displayValue}</p>
         )}
       </div>
     );
@@ -200,10 +190,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-[90%] max-w-4xl overflow-y-auto max-h-[90vh] text-black dark:text-white shadow-lg">
             <div className="flex justify-between items-center border-b-2 border-blue-400 mb-5">
               <h2 className="text-2xl font-semibold mb-6 text-blue-600">{apiData.name}</h2>
-              <FaTimes
-                onClick={() => setShowModal(false)}
-                className="cursor-pointer text-red-400 text-3xl hover:text-red-500"
-              />
+              <FaTimes onClick={() => setShowModal(false)} className="cursor-pointer text-red-400 text-3xl hover:text-red-500" />
             </div>
 
             {renderEditableField({ label: "API Name", field: "name" })}
@@ -214,6 +201,28 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
             {renderEditableField({ label: "Parameters", field: "parameters", type: "textarea" })}
             {renderEditableField({ label: "Visibility", field: "visibility" })}
 
+            {/* API URL Block */}
+            <div className="mb-4 relative">
+              <h3 className="text-lg font-bold text-blue-500 pb-2">API URL</h3>
+              <SyntaxHighlighter
+                language="javascript"
+                style={isDark ? vscDarkPlus : vs}
+                wrapLines
+                className="rounded overflow-x-auto"
+              >
+                {apiData.url || "// Not available"}
+              </SyntaxHighlighter>
+              {apiData.url && (
+                <button
+                  onClick={() => handleCopy(apiData.url, "url")}
+                  className="absolute top-2 right-2 flex items-center gap-2 text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
+                >
+                  {copiedUrl ? "Copied!" : <FaCopy />}
+                </button>
+              )}
+            </div>
+
+            {/* Example Code Block */}
             <div className="mb-4 relative">
               <h3 className="text-lg font-bold text-blue-500 pb-2">Example Code</h3>
               <SyntaxHighlighter
@@ -224,25 +233,24 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
               >
                 {apiData.exampleCode || "// Not available"}
               </SyntaxHighlighter>
-              <button
-                onClick={() => handleCopy(apiData.exampleCode)}
-                className="absolute top-2 right-2 flex items-center gap-2 text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-              >
-                {copied ? "Copied!" : <FaCopy />}
-              </button>
+              {apiData.exampleCode && (
+                <button
+                  onClick={() => handleCopy(apiData.exampleCode, "example")}
+                  className="absolute top-2 right-2 flex items-center gap-2 text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
+                >
+                  {copiedExample ? "Copied!" : <FaCopy />}
+                </button>
+              )}
             </div>
 
             {isOwner && (
-            <div className="flex gap-3">
-              <div className="flex justify-end mt-4 ">
+              <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-red-600 transition-all active:scale-90"
                 >
                   Close
                 </button>
-              </div>
-              <div className="flex gap-4 justify-end mt-4">
                 <button
                   onClick={handleDelete}
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-2"
@@ -250,9 +258,7 @@ const ViewUserApi = ({ setShowModal, id, onUpdate }) => {
                   <FaTrash /> Delete
                 </button>
               </div>
-            </div>
             )}
-
           </div>
         </motion.div>
       </AnimatePresence>

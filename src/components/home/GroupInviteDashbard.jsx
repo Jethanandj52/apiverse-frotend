@@ -552,7 +552,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
               placeholder="Group Name"
               value={newGroupName}
               onChange={e => setNewGroupName(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent"
+              className="w-full p-3 rounded-lg border  border-gray-300 dark:border-gray-600 "
               required
             />
             <input
@@ -571,12 +571,12 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
       {showInviteModal && (
         <Modal title="Send Group Invite" onClose={() => setShowInviteModal(false)}>
-          <form onSubmit={sendInvite} className="space-y-4">
-            <select value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent" required>
-              <option value="">Select Group</option>
+          <form onSubmit={sendInvite} className="space-y-4 ">
+            <select value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600  bg-white dark:bg-gray-700" required>
+              <option value="" className="bg-white dark:bg-gray-700">Select Group</option>
               {groups.map((g) => (<option key={g._id} value={g._id}>{g.name}</option>))}
             </select>
-            <input type="email" placeholder="Receiver Email" value={receiverEmail} onChange={(e) => setReceiverEmail(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent" required />
+            <input type="email" placeholder="Receiver Email" value={receiverEmail} onChange={(e) => setReceiverEmail(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700" required />
             <button type="submit" className="w-full py-3 bg-green-600 hover:bg-green-700 rounded-lg text-white font-semibold">Send</button>
           </form>
         </Modal>

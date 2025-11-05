@@ -14,14 +14,18 @@ const LibraryManagement = () => {
   const [libraries, setLibraries] = useState([]);
   const [libraryToDelete, setLibraryToDelete] = useState(null);
   const [viewLibId, setViewLibId] = useState(null);
+  const [loading, setLoading] = useState(true); // loader state
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [categorySearch, setCategorySearch] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const fetchLibraries = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${BASE_URL}/lib/getlibraries`, {
         withCredentials: true,
@@ -29,6 +33,8 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       setLibraries(res.data);
     } catch (err) {
       console.error("Failed to fetch libraries:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,7 +55,6 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     fetchLibraries();
   }, []);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -60,13 +65,11 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Get unique categories
   const categories = ["All", ...new Set(libraries.map((lib) => lib.category))];
   const filteredCategories = categories.filter((cat) =>
     cat.toLowerCase().includes(categorySearch.toLowerCase())
   );
 
-  // Filter libraries by category + search
   let filteredLibraries = libraries;
   if (selectedCategory !== "All") {
     filteredLibraries = filteredLibraries.filter(
@@ -104,7 +107,9 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
           </div>
 
           <AnimatePresence>
-            {showModal && <AddLib setShowModal={setShowModal} onLibraryAdded={fetchLibraries} />}
+            {showModal && (
+              <AddLib setShowModal={setShowModal} onLibraryAdded={fetchLibraries} />
+            )}
           </AnimatePresence>
 
           <AnimatePresence>
@@ -113,11 +118,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
           {/* Filter + Search */}
           <div className="mt-6 flex flex-col md:flex-row justify-between gap-4 items-center bg-gray-100 dark:bg-gray-900 py-2">
-            {/* Category Filter */}
             <div className="w-full md:w-64 relative" ref={dropdownRef}>
               <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                  Filter by Category:
-                </label>
+                Filter by Category:
+              </label>
               <input
                 type="text"
                 placeholder="Filter by category..."
@@ -154,11 +158,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
               )}
             </div>
 
-            {/* Search Bar */}
             <div className="w-full md:w-64">
-               <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                  Search Library:
-                </label>
+              <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Search Library:
+              </label>
               <input
                 type="text"
                 placeholder="Search libraries..."
@@ -169,49 +172,54 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
             </div>
           </div>
 
-          {/* Library Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-            {filteredLibraries.length > 0 ? (
-              filteredLibraries.map((lib) => (
-                <div
-                  key={lib._id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-3"
-                >
-                  <div className="flex justify-between items-center border-b-1 pb-4 border-blue-400">
-                    <h3 className="font-bold text-blue-400 text-2xl">{lib.name}</h3>
-                    <FaTrash
-                      onClick={() => setLibraryToDelete(lib._id)}
-                      className="text-red-600 cursor-pointer hover:scale-110 transition"
-                      title="Delete"
-                    />
+          {/* Loader */}
+          {loading ? (
+            <div className="flex justify-center items-center mt-20">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-b-4 border-gray-300"></div>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+              {filteredLibraries.length > 0 ? (
+                filteredLibraries.map((lib) => (
+                  <div
+                    key={lib._id}
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-3"
+                  >
+                    <div className="flex justify-between items-center border-b-1 pb-4 border-blue-400">
+                      <h3 className="font-bold text-blue-400 text-2xl">{lib.name}</h3>
+                      <FaTrash
+                        onClick={() => setLibraryToDelete(lib._id)}
+                        className="text-red-600 cursor-pointer hover:scale-110 transition"
+                        title="Delete"
+                      />
+                    </div>
+                    <p className="text-sm">{lib.description}</p>
+                    <div className="leading-8">
+                      <strong>Language:</strong> {lib.language} <br />
+                      <strong>Category:</strong> {lib.category} <br />
+                      <strong>Security:</strong> {lib.security} <br />
+                      <strong>License:</strong> {lib.license}
+                    </div>
+                    <div className="flex justify-center items-center mt-4">
+                      <button
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 cursor-pointer active:scale-90 transition-all"
+                        onClick={() => setViewLibId(lib._id)}
+                      >
+                        View Docs
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-sm">{lib.description}</p>
-                  <div className="leading-8">
-                    <strong>Language:</strong> {lib.language} <br />
-                    <strong>Category:</strong> {lib.category} <br />
-                    <strong>Security:</strong> {lib.security} <br />
-                    <strong>License:</strong> {lib.license}
-                  </div>
-                  <div className="flex justify-center items-center mt-4">
-                    <button
-                      className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 cursor-pointer active:scale-90 transition-all"
-                      onClick={() => setViewLibId(lib._id)}
-                    >
-                      View Docs
-                    </button>
-                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">No libraries found</p>
                 </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">No libraries found</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Confirm Delete Popup */}
       <AnimatePresence>
         {libraryToDelete && (
           <ConfirmDeletePopup

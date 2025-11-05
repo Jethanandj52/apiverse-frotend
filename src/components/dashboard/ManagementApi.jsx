@@ -14,6 +14,7 @@ const ManagementApi = () => {
   const [viewApiId, setViewApiId] = useState(null);
   const [apiToDelete, setApiToDelete] = useState(null);
   const [api, setApi] = useState([]);
+  const [loading, setLoading] = useState(true); // Loader state
 
   // Search + Filter
   const [selectedCategory, setSelectedCategory] = useState("Popular");
@@ -23,14 +24,20 @@ const ManagementApi = () => {
   const dropdownRef = useRef(null);
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const fetchApi = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/rApi/showApi`);
-      setApi(res.data);
-    } catch (error) {
-      console.log("error:", error.message);
-    }
-  };
+
+ const fetchApi = async () => {
+  setLoading(true); // loader start
+  try {
+    const res = await axios.get(`${BASE_URL}/rApi/showApi`);
+    setApi(res.data);
+    await new Promise((resolve) => setTimeout(resolve, 300)); // 300ms delay
+  } catch (error) {
+    console.log("error:", error.message);
+  } finally {
+    setLoading(false); // loader stop
+  }
+};
+
 
   useEffect(() => {
     fetchApi();
@@ -159,45 +166,51 @@ const ManagementApi = () => {
             </div>
           </div>
 
-          {/* API Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-            {filteredApis.length > 0 ? (
-              filteredApis.map((Api) => (
-                <div
-                  key={Api._id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-3"
-                >
-                  <div className="flex justify-between items-center border-b pb-4 border-blue-400">
-                    <h3 className="font-bold text-blue-400 text-2xl">{Api.name}</h3>
-                    <FaTrash
-                      onClick={() => setApiToDelete(Api._id)}
-                      className="text-red-600 cursor-pointer hover:scale-110 transition"
-                      title="Delete"
-                    />
+          {/* Loader */}
+        {loading ? (
+  <div className="flex justify-center items-center mt-20 col-span-full">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-b-4 border-gray-300"></div>
+  </div>
+) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+              {filteredApis.length > 0 ? (
+                filteredApis.map((Api) => (
+                  <div
+                    key={Api._id}
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-3"
+                  >
+                    <div className="flex justify-between items-center border-b pb-4 border-blue-400">
+                      <h3 className="font-bold text-blue-400 text-2xl">{Api.name}</h3>
+                      <FaTrash
+                        onClick={() => setApiToDelete(Api._id)}
+                        className="text-red-600 cursor-pointer hover:scale-110 transition"
+                        title="Delete"
+                      />
+                    </div>
+                    <p className="text-sm">{Api.description}</p>
+                    <div className="leading-8">
+                      <strong>Language:</strong> {Api.language} <br />
+                      <strong>Category:</strong> {Api.category} <br />
+                      <strong>Security:</strong> {Api.security} <br />
+                      <strong>License:</strong> {Api.license}
+                    </div>
+                    <div className="flex justify-center items-center mt-4 gap-4">
+                      <button
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 cursor-pointer active:scale-90 transition-all"
+                        onClick={() => setViewApiId(Api._id)}
+                      >
+                        View Docs
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-sm">{Api.description}</p>
-                  <div className="leading-8">
-                    <strong>Language:</strong> {Api.language} <br />
-                    <strong>Category:</strong> {Api.category} <br />
-                    <strong>Security:</strong> {Api.security} <br />
-                    <strong>License:</strong> {Api.license}
-                  </div>
-                  <div className="flex justify-center items-center mt-4 gap-4">
-                    <button
-                      className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 cursor-pointer active:scale-90 transition-all"
-                      onClick={() => setViewApiId(Api._id)}
-                    >
-                      View Docs
-                    </button>
-                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">No APIs available</p>
                 </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">No APIs available</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
