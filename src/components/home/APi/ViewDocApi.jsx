@@ -7,17 +7,19 @@ import { vs, vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
 
 const ViewDocApi = ({ setShowModal, id }) => {
   const [docData, setDocData] = useState(null);
-  const [copiedSection, setCopiedSection] = useState(""); // track which section copied
+  const [copied, setCopied] = useState(false);
   const [isDark, setIsDark] = useState(false);
+
   const [selectedLang, setSelectedLang] = useState("JavaScript");
+
   const [docExample, setDocExample] = useState("");
   const [integrationCode, setIntegrationCode] = useState("");
   const [aiCode, setAiCode] = useState("");
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  // ✅ New loader state
   const [loadingAi, setLoadingAi] = useState(false);
 
-  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-  // Detect dark mode
+  // ✅ Detect dark mode
   useEffect(() => {
     const updateDarkMode = () =>
       setIsDark(document.body.classList.contains("dark"));
@@ -32,7 +34,7 @@ const ViewDocApi = ({ setShowModal, id }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Fetch API data by id
+  // ✅ Fetch API data by id
   useEffect(() => {
     if (!id) return;
 
@@ -40,6 +42,7 @@ const ViewDocApi = ({ setShowModal, id }) => {
       try {
         const res = await axios.get(`${BASE_URL}/rApi/getApiById/${id}`);
         setDocData(res.data);
+
         setDocExample(res.data?.documentation?.example || "");
         setIntegrationCode(res.data?.integration?.codeExamples || "");
       } catch (err) {
@@ -50,10 +53,10 @@ const ViewDocApi = ({ setShowModal, id }) => {
     fetchApiData();
   }, [id]);
 
-  const handleCopy = (text, section) => {
+  const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
-    setCopiedSection(section);
-    setTimeout(() => setCopiedSection(""), 3000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
   };
 
   const formatText = (text) => {
@@ -78,7 +81,7 @@ const ViewDocApi = ({ setShowModal, id }) => {
     );
   };
 
-  // Gemini AI call
+  // ✅ Gemini AI call
   const getAiSnippet = async (jsCode, apiUrl, targetLang) => {
     if (!jsCode) return "";
 
@@ -90,14 +93,16 @@ Code:
 ${jsCode}`;
 
     try {
-      setLoadingAi(true);
+      setLoadingAi(true); // start loader
       const res = await axios.post(`${BASE_URL}/ai/gemini`, {
         prompt,
         language: targetLang,
-        userId: localStorage.getItem("userId"),
+         userId: localStorage.getItem("userId"),
       });
 
       let output = res.data.response || "";
+
+      // ✅ Remove markdown fences if any
       output = output.replace(/```[\s\S]*?```/g, (match) =>
         match.replace(/```[a-zA-Z]*/g, "").replace(/```/g, "")
       );
@@ -107,11 +112,11 @@ ${jsCode}`;
       console.error("AI Error:", err.message);
       return "// ❌ Failed to generate code";
     } finally {
-      setLoadingAi(false);
+      setLoadingAi(false); // stop loader
     }
   };
 
-  // Run AI conversion when language changes
+  // ✅ Run AI conversion when lang changes
   useEffect(() => {
     const fetchConverted = async () => {
       if (!docData || !integrationCode) return;
@@ -135,6 +140,7 @@ ${jsCode}`;
 
   if (!docData) return null;
 
+  // ✅ Show loader text until AI response comes
   const codeToShow =
     selectedLang === "JavaScript"
       ? integrationCode
@@ -177,7 +183,9 @@ ${jsCode}`;
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="mb-4">
-              <h3 className="text-lg font-bold text-blue-500 pb-2">Language(s)</h3>
+              <h3 className="text-lg font-bold text-blue-500 pb-2">
+                Language(s)
+              </h3>
               <p className="bg-gray-100 dark:bg-gray-900 p-3 rounded">
                 {formatText(docData?.language)}
               </p>
@@ -204,7 +212,9 @@ ${jsCode}`;
 
           {/* Documentation */}
           <hr className="my-6 border-gray-300" />
-          <h2 className="text-2xl font-semibold mb-4 text-blue-600">📄 Documentation</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-blue-600">
+            📄 Documentation
+          </h2>
 
           <div className="mb-4">
             <h3 className="text-lg font-bold text-blue-500 pb-2">Title</h3>
@@ -230,29 +240,32 @@ ${jsCode}`;
               {formatText(docData?.documentation?.parameters)}
             </p>
           </div>
-
-          {/* Examples */}
           <div className="mb-4 relative">
             <h3 className="text-lg font-bold text-blue-500">Examples</h3>
-            <SyntaxHighlighter
-              language="javascript"
-              style={isDark ? vscDarkPlus : vs}
-              wrapLines
-              className="rounded overflow-x-auto"
-            >
-              {docExample || "// ❌ Not available"}
-            </SyntaxHighlighter>
-            <button
-              onClick={() => handleCopy(docExample, "example")}
-              className="absolute top-2 right-2 flex items-center gap-2 text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-            >
-              {copiedSection === "example" ? "Copied!" : <FaCopy />}
-            </button>
+            <div className="relative">
+              <SyntaxHighlighter
+                language="javascript"
+                style={isDark ? vscDarkPlus : vs}
+                wrapLines
+                className="rounded overflow-x-auto"
+              >
+                {docExample || "// ❌ Not available"}
+              </SyntaxHighlighter>
+              <button
+                onClick={() => handleCopy(docExample)}
+                className="absolute top-2 right-2 flex items-center gap-2 text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
+              >
+                <FaCopy />
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
           </div>
 
           {/* Integration */}
           <hr className="my-6 border-gray-300" />
-          <h2 className="text-2xl font-semibold mb-4 text-green-600">🔌 Integration Guide</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-green-600">
+            🔌 Integration Guide
+          </h2>
 
           <div className="mb-4">
             <h3 className="text-lg font-bold text-blue-500 pb-2">Title</h3>
@@ -298,20 +311,22 @@ ${jsCode}`;
               </select>
             </div>
 
-            <SyntaxHighlighter
-              language={selectedLang.toLowerCase()}
-              style={isDark ? vscDarkPlus : vs}
-              wrapLines
-              className="rounded overflow-x-auto"
-            >
-              {codeToShow}
-            </SyntaxHighlighter>
-            <button
-              onClick={() => handleCopy(codeToShow, "integration")}
-              className="absolute top-2 right-2 flex items-center gap-2 text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-            >
-              {copiedSection === "integration" ? "Copied!" : <FaCopy />}
-            </button>
+            <div className="relative">
+              <SyntaxHighlighter
+                language={selectedLang.toLowerCase()}
+                style={isDark ? vscDarkPlus : vs}
+                wrapLines
+                className="rounded overflow-x-auto"
+              >
+                {codeToShow}
+              </SyntaxHighlighter>
+              <button
+                onClick={() => handleCopy(codeToShow)}
+                className="absolute top-2 right-2 flex items-center gap-2 text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
+              >
+                {copied ? "Copied!" : <FaCopy />}
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-end mt-6">
