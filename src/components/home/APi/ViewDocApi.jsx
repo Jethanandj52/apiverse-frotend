@@ -79,6 +79,7 @@ ${jsCode}`;
         prompt,
         language: targetLang,
         userId: localStorage.getItem("userId"),
+         model: "deepseek-r1-lite" 
       });
 
       let output = res.data.response || "";
