@@ -65,7 +65,7 @@ const Gemini = () => {
         prompt,
         userId,
         chatId: activeChat?._id || null,
-         
+         model: "deepseek-r1-lite" 
       });
 
       const { chatId, response } = res.data;
