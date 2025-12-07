@@ -75,7 +75,7 @@ const ManagementApi = () => {
       : selectedCategory === "All"
       ? api
       : api.filter((item) => item.category === selectedCategory);
-s
+
   if (searchQuery.trim() !== "") {
     filteredApis = filteredApis.filter(
       (item) =>
