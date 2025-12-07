@@ -101,9 +101,7 @@ const Dashboard = () => {
               { title: "Users", value: countUser.length },
               { title: "Total APIs", value: countApi.length },
               { title: "Total Libraries", value: countLib.length },
-              { title: "API Calls Today", value: callsToday },
-              { title: "Library Calls Today", value: libCallsToday },
-              { title: "Security Alerts", value: securityAlerts },
+               
             ].map((item, idx) => (
               <motion.div
                 key={idx}

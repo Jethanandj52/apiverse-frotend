@@ -52,9 +52,10 @@ const ApiAdd = ({ setShowModal,onApiAdded }) => {
 
     // console.log("Submitted API Data:", apiData);
     try {
-      await axios.post(`${BASE_URL}/rApi/addApiDB`, {
-        withCredentials: true,
-      }, apiData);
+     await axios.post(`${BASE_URL}/rApi/addApiDB`, apiData, {
+  withCredentials: true,
+});
+
       onApiAdded();
 
       toast.success("Api Added Successful!", { autoClose: 1000 });

@@ -53,46 +53,39 @@ const Gemini = () => {
     }
   };
 
-  const handleSend = async () => {
-    if (!prompt.trim()) return;
-    try {
-      setLoading(true);
-      setError("");
-      setIsTyping(true);
-      setResponseText("");
+const handleSend = async () => {
+  if (!prompt.trim()) return;
+  try {
+    setLoading(true);
+    setError("");
+    setIsTyping(true);
+    setResponseText("");
 
-      const res = await axios.post(`${BASE_URL}/ai/gemini`, {
-        prompt,
-        userId,
-        chatId: activeChat?._id || null,
-         model: "deepseek-r1-lite" 
-      });
+    const res = await axios.post(`${BASE_URL}/ai/gemini`, {
+      prompt,
+      userId,
+      chatId: activeChat?._id || null,
+      model: "deepseek-r1-lite",
+    });
 
-      const { chatId, response } = res.data;
-      setPrompt("");
-      let index = 0;
-      typingRef.current = true;
+    const { chatId, response } = res.data;
+    setPrompt("");
 
-      const typeText = () => {
-        if (!typingRef.current) return;
-        if (index < response.length) {
-          setResponseText((prev) => prev + response.charAt(index));
-          index++;
-          setTimeout(typeText, 10);
-        } else {
-          setIsTyping(false);
-          setLoading(false);
-          fetchChats();
-          loadChat(chatId);
-        }
-      };
-      typeText();
-    } catch (err) {
-      setError("⚠️ Server Error: " + (err.response?.data?.message || err.message));
-      setLoading(false);
-      setIsTyping(false);
-    }
-  };
+    // Directly set response without typing effect
+    setResponseText(response);
+
+    setIsTyping(false);
+    setLoading(false);
+
+    fetchChats();
+    loadChat(chatId);
+  } catch (err) {
+    setError("⚠️ Server Error: " + (err.response?.data?.message || err.message));
+    setLoading(false);
+    setIsTyping(false);
+  }
+};
+
 
   const copyToClipboard = (code) => navigator.clipboard.writeText(code);
 
