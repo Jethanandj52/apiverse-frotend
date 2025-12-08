@@ -14,7 +14,7 @@ const LibraryManagement = () => {
   const [libraries, setLibraries] = useState([]);
   const [libraryToDelete, setLibraryToDelete] = useState(null);
   const [viewLibId, setViewLibId] = useState(null);
-  const [loading, setLoading] = useState(true); // loader state
+  const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -84,6 +84,13 @@ const LibraryManagement = () => {
     );
   }
 
+  // ✅ Update a single library in state after edit
+  const handleLibraryUpdated = (updatedLib) => {
+    setLibraries((prev) =>
+      prev.map((lib) => (lib._id === updatedLib._id ? updatedLib : lib))
+    );
+  };
+
   return (
     <div className="bg-gray-100 dark:bg-gray-900 text-black dark:text-white overflow-hidden">
       <Nav sideBar={sideBar} setSidebar={setSidebar} />
@@ -113,7 +120,13 @@ const LibraryManagement = () => {
           </AnimatePresence>
 
           <AnimatePresence>
-            {viewLibId && <ViewDocLib setShowModal={setViewLibId} id={viewLibId} />}
+            {viewLibId && (
+              <ViewDocLib
+                setShowModal={setViewLibId}
+                id={viewLibId}
+                onLibraryUpdated={handleLibraryUpdated} // ✅ Pass callback
+              />
+            )}
           </AnimatePresence>
 
           {/* Filter + Search */}
@@ -195,7 +208,7 @@ const LibraryManagement = () => {
                     </div>
                     <p className="text-sm">{lib.description}</p>
                     <div className="leading-8">
-                      <strong>Language:</strong> {lib.language} <br />
+                      <strong>Language:</strong> {lib.language?.join(", ")} <br />
                       <strong>Category:</strong> {lib.category} <br />
                       <strong>Security:</strong> {lib.security} <br />
                       <strong>License:</strong> {lib.license}

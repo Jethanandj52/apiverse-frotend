@@ -7,7 +7,7 @@ import { FaCopy } from 'react-icons/fa';
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs, okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-const ViewDoc = ({ setShowModal, id }) => {
+const ViewDoc = ({ setShowModal, id, onApiUpdated }) => {
   const [docData, setDocData] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [form, setForm] = useState({});
@@ -15,6 +15,7 @@ const ViewDoc = ({ setShowModal, id }) => {
   const [isDark, setIsDark] = useState(false);
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // Detect dark mode dynamically
   useEffect(() => {
     const updateDarkMode = () => setIsDark(document.body.classList.contains("dark"));
@@ -24,45 +25,47 @@ const ViewDoc = ({ setShowModal, id }) => {
     return () => observer.disconnect();
   }, []);
 
+  // Fetch API by ID
   useEffect(() => {
     if (!id) return;
     const fetchApiById = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/rApi/getApiById/${id}`, {
-        withCredentials: true,
-      });
+        const res = await axios.get(`${BASE_URL}/rApi/getApiById/${id}`, { withCredentials: true });
         setDocData(res.data);
         setForm(res.data);
       } catch (err) {
         console.error("❌ Error loading API:", err.message);
+        toast.error("Failed to load API", { autoClose: 2000 });
       }
     };
     fetchApiById();
   }, [id]);
 
-const handleSaveField = async (field, isNested = false) => {
-  try {
-    const updated = { ...form };
+  const handleSaveField = async (field, isNested = false) => {
+    try {
+      const updated = { ...form };
 
-    const res = await axios.put(
-      `${BASE_URL}/rApi/updateApi/${id}`,   // ✅ proxy use kiya, direct 5000 mat likho
-      updated,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
+      const res = await axios.put(
+        `${BASE_URL}/rApi/updateApi/${id}`,
+        updated,
+        { headers: { "Content-Type": "application/json" }, withCredentials: true }
+      );
+
+      setDocData(res.data); // backend updated data
+      setForm(res.data);    // update form too
+      setEditingField(null);
+      toast.success("API updated successfully!", { autoClose: 2000 });
+
+      // Notify parent to refresh list
+      if (typeof onApiUpdated === "function") {
+        onApiUpdated();
       }
-    );
 
-    setDocData(res.data);   // ✅ backend se updated data lelo
-    setEditingField(null);
-    toast.success("API updated successfully!", { autoClose: 2000 });
-
-  } catch (err) {
-    console.error("❌ Save error:", err.response?.data || err.message);
-    toast.error("Error: " + (err.response?.data?.message || err.message), { autoClose: 2000 });
-  }
-};
-
+    } catch (err) {
+      console.error("❌ Save error:", err.response?.data || err.message);
+      toast.error("Error: " + (err.response?.data?.message || err.message), { autoClose: 2000 });
+    }
+  };
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
@@ -76,13 +79,10 @@ const handleSaveField = async (field, isNested = false) => {
 
     const onChange = (e) => {
       const val = e.target.value;
-      setForm(prev => {
-        if (isNested) {
-          return { ...prev, [isNested]: { ...prev[isNested], [field]: val } };
-        } else {
-          return { ...prev, [field]: val };
-        }
-      });
+      setForm(prev => isNested
+        ? { ...prev, [isNested]: { ...prev[isNested], [field]: val } }
+        : { ...prev, [field]: val }
+      );
     };
 
     // Steps rendering
@@ -165,7 +165,7 @@ const handleSaveField = async (field, isNested = false) => {
           </>
         ) : (
           <p className="bg-gray-100 dark:bg-gray-700 p-3 rounded whitespace-pre-wrap">
-            {originalValue || 'N/A'}
+            {originalValue ?? 'N/A'}
           </p>
         )}
       </div>

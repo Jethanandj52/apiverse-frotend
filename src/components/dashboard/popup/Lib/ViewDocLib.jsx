@@ -7,73 +7,68 @@ import { FaCopy } from 'react-icons/fa';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vs, okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-const ViewDocLib = ({ setShowModal, id }) => {
+const ViewDocLib = ({ setShowModal, id, onLibraryUpdated }) => {
   const [docData, setDocData] = useState(null);
   const [form, setForm] = useState({});
   const [editingField, setEditingField] = useState(null);
   const [copied, setCopied] = useState(false);
   const [isDark, setIsDark] = useState(false);
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // Detect dark mode dynamically
   useEffect(() => {
     const updateDarkMode = () => setIsDark(document.body.classList.contains("dark"));
     updateDarkMode();
-
     const observer = new MutationObserver(updateDarkMode);
     observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-
     return () => observer.disconnect();
   }, []);
 
+  // Fetch library by ID
   useEffect(() => {
     if (!id) return;
-
     const fetchLibById = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/lib/getLibById/${id}`, {
-        withCredentials: true,
-      });
+        const res = await axios.get(`${BASE_URL}/lib/getLibById/${id}`, { withCredentials: true });
         setDocData(res.data);
         setForm(res.data);
       } catch (err) {
-       toast.error("Error: " + (err.response?.data || err.message), {
-                    autoClose: 2000,
-                  });
+        console.error("❌ Error loading library:", err.message);
+        toast.error("Failed to load library", { autoClose: 2000 });
       }
     };
-
     fetchLibById();
   }, [id]);
 
   const handleChange = (field, value) => {
-    setForm(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+    setForm(prev => ({ ...prev, [field]: value }));
   };
 
   const handleUsageChange = (field, value) => {
-    setForm(prev => ({
-      ...prev,
-      usage: {
-        ...prev.usage,
-        [field]: value,
-      }
-    }));
+    setForm(prev => ({ ...prev, usage: { ...prev.usage, [field]: value } }));
   };
 
-  const handleSaveField = async (field) => {
+  const handleSaveField = async (field, isUsage = false) => {
     try {
-      await axios.put(`${BASE_URL}/lib/updateLib/${id}`, {
-        withCredentials: true,
-      }, form);
-      setDocData(form);
+      const payload = isUsage ? { ...docData, usage: { ...form.usage } } : { ...form };
+      const res = await axios.put(`${BASE_URL}/lib/updateLib/${id}`, payload, { withCredentials: true });
+
+      // Update local state
+      setDocData(res.data.updated);
+      setForm(res.data.updated);
       setEditingField(null);
+
+      toast.success("Library updated successfully!", { autoClose: 2000 });
+
+      // Notify parent component about update
+      if (typeof onLibraryUpdated === "function") {
+        onLibraryUpdated(res.data.updated);
+      }
+
     } catch (err) {
       console.error("❌ Error updating:", err.message);
-     toast.error("Error: " + (err.response?.data || err.message), {
-                  autoClose: 2000,
-                });
+      toast.error("Error: " + (err.response?.data || err.message), { autoClose: 2000 });
     }
   };
 
@@ -86,26 +81,36 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   if (!docData) return null;
 
   const renderUsageField = (label, field, isCode = false, isSteps = false) => {
-    const value = docData.usage?.[field];
-    if (!value) return null;
-
+    const value = form.usage?.[field];
     if (editingField === field) {
       return (
-        <>
-          <input
-            className="w-full p-2 rounded bg-gray-100 dark:bg-gray-700"
-            value={form.usage?.[field] || ''}
-            onChange={(e) => handleUsageChange(field, e.target.value)}
-          />
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-blue-500 pb-2">{label}</h3>
+          {isCode || isSteps ? (
+            <textarea
+              rows={4}
+              value={value || ''}
+              onChange={(e) => handleUsageChange(field, e.target.value)}
+              className="w-full p-2 rounded bg-gray-100 dark:bg-gray-700"
+            />
+          ) : (
+            <input
+              className="w-full p-2 rounded bg-gray-100 dark:bg-gray-700"
+              value={value || ''}
+              onChange={(e) => handleUsageChange(field, e.target.value)}
+            />
+          )}
           <button
-            onClick={() => handleSaveField(field)}
+            onClick={() => handleSaveField(field, true)}
             className="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
           >
             Save
           </button>
-        </>
+        </div>
       );
     }
+
+    if (!value) return null;
 
     if (isCode) {
       return (
@@ -135,9 +140,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
         <div className="mb-4">
           <h3 className="text-lg font-bold text-green-500 pb-2">{label}</h3>
           <ol className="list-decimal list-inside space-y-1 bg-gray-100 dark:bg-gray-700 p-3 rounded">
-            {stepsArray.map((step, idx) => (
-              <li key={idx}>{step.trim()}</li>
-            ))}
+            {stepsArray.map((step, idx) => <li key={idx}>{step.trim()}</li>)}
           </ol>
         </div>
       );
@@ -146,7 +149,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
     return (
       <div className="mb-4">
         <h3 className="text-lg font-bold text-blue-500 pb-2">{label}</h3>
-        <p className="bg-gray-100 dark:bg-gray-700 p-3 rounded">{value}</p>
+        <p className="bg-gray-100 dark:bg-gray-700 p-3 rounded">{value || 'N/A'}</p>
       </div>
     );
   };
@@ -171,10 +174,10 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
           </div>
 
           <div className="space-y-4">
-            {[['API Name', 'name'], ['Description', 'description'], ['Category', 'category'], ['License', 'license']].map(([label, field]) => (
+            {['name', 'description', 'category', 'license'].map(field => (
               <div key={field}>
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold text-blue-500 pb-2">{label}:</h3>
+                  <h3 className="text-lg font-bold text-blue-500 pb-2">{field.charAt(0).toUpperCase() + field.slice(1)}:</h3>
                   <Pencil
                     size={18}
                     className="text-blue-500 cursor-pointer"
@@ -201,7 +204,6 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
               </div>
             ))}
 
-            {/* Language */}
             <div>
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-bold text-blue-500 pb-2">Languages:</h3>
@@ -216,9 +218,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                   <input
                     className="w-full p-2 rounded bg-gray-100 dark:bg-gray-700"
                     value={(form.language || []).join(', ')}
-                    onChange={(e) =>
-                      handleChange('language', e.target.value.split(',').map(i => i.trim()))
-                    }
+                    onChange={(e) => handleChange('language', e.target.value.split(',').map(i => i.trim()))}
                   />
                   <button
                     onClick={() => handleSaveField('language')}
@@ -228,22 +228,18 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
                   </button>
                 </>
               ) : (
-                <p className="bg-gray-100 dark:bg-gray-700 p-3 rounded">
-                  {docData.language?.join(', ') || 'N/A'}
-                </p>
+                <p className="bg-gray-100 dark:bg-gray-700 p-3 rounded">{docData.language?.join(', ') || 'N/A'}</p>
               )}
             </div>
 
-            {/* Usage Fields with code/steps styling */}
+            {/* Usage fields */}
             {renderUsageField("Github Repo", "repository")}
             {renderUsageField("Documentation URL", "documentationUrl")}
             {renderUsageField("Installation", "installation")}
             {renderUsageField("Usage Examples", "usageExamples", true)}
             {renderUsageField("Integration Steps", "integrationSteps", false, true)}
-
           </div>
 
-          {/* Close button */}
           <div className="flex justify-end gap-4 mt-6">
             <button
               onClick={() => setShowModal(false)}

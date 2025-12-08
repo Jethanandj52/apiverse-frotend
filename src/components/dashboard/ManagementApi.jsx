@@ -217,7 +217,7 @@ const ManagementApi = () => {
       {/* Modals */}
       <AnimatePresence>
         {isAddModalOpen && <ApiAdd setShowModal={setIsAddModalOpen} onApiAdded={fetchApi} />}
-        {viewApiId && <ViewDoc setShowModal={() => setViewApiId(null)} id={viewApiId} />}
+        {viewApiId && <ViewDoc setShowModal={() => setViewApiId(null)} id={viewApiId}  onApiUpdated={fetchApi}/>}
         {apiToDelete && (
           <ConfirmDeletePopup
             onCancel={() => setApiToDelete(null)}
