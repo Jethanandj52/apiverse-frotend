@@ -4,16 +4,19 @@ import SideBar from "./SideBar";
 import axios from "axios";
 import { Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaUser, FaUsers } from "react-icons/fa";
+import { FaUsers } from "react-icons/fa";
 
 const UserManagement = () => {
   const [sideBar, setSidebar] = useState(true);
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true); // ✅ Loading state
   const [showPopup, setShowPopup] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // ✅ Fetch Users
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${BASE_URL}/user/admin/users`, {
         withCredentials: true,
@@ -21,6 +24,8 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
       setUsers(res.data);
     } catch (err) {
       console.error("Error fetching users:", err.response?.data || err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,55 +69,60 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
             <h2>User Management</h2>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {users.map((user) => (
-              <div
-                key={user._id}
-                className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-md p-4 cursor-pointer hover:scale-105 transition-all"
-              >
-                {/* ✅ Delete Button */}
-                <button
-                  className="absolute top-3 right-3 text-red-500 hover:text-red-700 cursor-pointer active:scale-90"
-                  onClick={() => confirmDelete(user._id)}
-                  title="Delete User"
-                >
-                  <Trash2 size={18} />
-                </button>
-
-                {/* ✅ Profile Image with Status Dot */}
-                <div className="relative w-16 h-16 mx-auto mb-4">
-                  <img
-                    src={user.photoURL}
-                    alt="Profile"
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                  <span
-                    className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white ${
-                      user.isActive ? "bg-green-500" : "bg-red-500"
-                    }`}
-                    title={user.isActive ? "Active" : "Inactive"}
-                  ></span>
-                </div>
-
-                <div className="text-center">
-                  <h3 className="font-semibold text-lg">
-                    {user.firstName} {user.lastName}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {user.email}
-                  </p>
-                  {user.gender && (
-                    <p className="text-sm mt-1 capitalize text-gray-500 dark:text-gray-400">
-                      Gender: {user.gender}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {users.length === 0 && (
+          {/* ✅ Loader */}
+          {loading ? (
+            <div className="flex justify-center items-center mt-20">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-b-4 border-gray-300"></div>
+            </div>
+          ) : users.length === 0 ? (
             <p className="text-center text-gray-500 mt-6">No users found.</p>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {users.map((user) => (
+                <div
+                  key={user._id}
+                  className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-md p-4 cursor-pointer hover:scale-105 transition-all"
+                >
+                  {/* ✅ Delete Button */}
+                  <button
+                    className="absolute top-3 right-3 text-red-500 hover:text-red-700 cursor-pointer active:scale-90"
+                    onClick={() => confirmDelete(user._id)}
+                    title="Delete User"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+
+                  {/* ✅ Profile Image with Status Dot */}
+                  <div className="relative w-16 h-16 mx-auto mb-4">
+                    <img
+                      src={user.photoURL}
+                      alt="Profile"
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+                    <span
+                      className={`absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-white ${
+                        user.isActive ? "bg-green-500" : "bg-red-500"
+                      }`}
+                      title={user.isActive ? "Active" : "Inactive"}
+                    ></span>
+                  </div>
+
+                  <div className="text-center">
+                    <h3 className="font-semibold text-lg">
+                      {user.firstName} {user.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {user.email}
+                    </p>
+                    {user.gender && (
+                      <p className="text-sm mt-1 capitalize text-gray-500 dark:text-gray-400">
+                        Gender: {user.gender}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>

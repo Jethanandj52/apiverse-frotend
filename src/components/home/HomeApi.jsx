@@ -499,9 +499,37 @@ useEffect(() => {
     })
   ) : (
     <div className="col-span-full text-center py-10">
+     {/* API Cards */}
+<div className="grid justify-center md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-10">
+  {loading ? (
+    <div className="col-span-full text-center py-16">
+      <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+        Loading APIs...
+      </p>
+      {/* Optional: add spinner */}
+      <div className="mt-4 animate-spin border-4 border-blue-500 border-t-transparent rounded-full w-12 h-12 mx-auto"></div>
+    </div>
+  ) : filteredApis.length > 0 ? (
+    filteredApis.map((Api) => {
+      const isFavorite = favorites.map(String).includes(String(Api._id));
+      return (
+        <div
+          key={Api._id}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 space-y-3 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
+        >
+          {/* ... your existing card code */}
+        </div>
+      );
+    })
+  ) : (
+    <div className="col-span-full text-center py-10">
       <p className="text-gray-500 dark:text-gray-400 text-lg">
         No APIs available
       </p>
+    </div>
+  )}
+</div>
+
     </div>
   )}
 </div>
